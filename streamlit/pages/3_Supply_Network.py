@@ -477,24 +477,46 @@ def render_full_graph(nodes, edges, height=600):
 
 
 def render_bom_tree(tree_data, height=500):
-    """Render BOM hierarchy using Plotly treemap."""
+    """Render BOM hierarchy using Plotly Treemap with rich tooltips."""
     
     if not tree_data:
         st.info("No Bill of Materials data available.")
         return
     
-    # Flatten all trees for Plotly sunburst
+    # Color scheme and type labels
+    type_colors = {
+        'FIN': '#10b981',
+        'SEMI': '#8b5cf6',
+        'RAW': '#f59e0b'
+    }
+    
+    type_labels = {
+        'FIN': 'Finished Good',
+        'SEMI': 'Semi-finished',
+        'RAW': 'Raw Material'
+    }
+    
+    # Flatten all trees for Plotly Treemap
+    ids = []
     labels = []
     parents = []
     values = []
     colors = []
-    ids = []  # Unique IDs to handle duplicate names
+    custom_data = []
     
-    type_colors = {
-                'FIN': '#10b981',
-                'SEMI': '#8b5cf6',
-                'RAW': '#f59e0b'
-    }
+    def count_leaves(node):
+        """Count leaf nodes for sizing - ensures parent >= sum of children."""
+        if not node:
+            return 0
+        children = node.get('children')
+        if not children:
+            return 1
+        return sum(count_leaves(c) for c in children if c)
+    
+    def count_children(node):
+        """Count direct children."""
+        children = node.get('children')
+        return len(children) if children else 0
     
     def flatten_tree(node, parent_id=""):
         if not node:
@@ -511,8 +533,24 @@ def render_bom_tree(tree_data, height=500):
         ids.append(unique_id)
         labels.append(node_name[:30])  # Truncate long names
         parents.append(parent_id)
-        values.append(float(qty) if qty else 1)
+        
+        # Use leaf count for value to ensure proper hierarchy display
+        leaf_count = count_leaves(node)
+        values.append(max(leaf_count, 1))
+        
         colors.append(type_colors.get(node_type, '#6b7280'))
+        
+        # Build custom data for rich tooltips
+        type_label = type_labels.get(node_type, node_type)
+        num_children = count_children(node)
+        children_text = f"{num_children} direct" if num_children > 0 else "None (leaf)"
+        
+        custom_data.append([
+            node_id,              # 0: Material ID
+            type_label,           # 1: Type label  
+            qty,                  # 2: Quantity per unit
+            children_text         # 3: Number of components
+        ])
         
         children = node.get('children')
         if children:
@@ -530,24 +568,49 @@ def render_bom_tree(tree_data, height=500):
         st.info("No Bill of Materials data available.")
         return
     
-    # Create sunburst chart (better for hierarchical data)
-    fig = go.Figure(go.Sunburst(
+    # Create Treemap with rich tooltips
+    fig = go.Figure(go.Treemap(
         ids=ids,
         labels=labels,
         parents=parents,
         values=values,
-        marker=dict(colors=colors),
-        branchvalues="remainder",
-        hovertemplate='<b>%{label}</b><br>Qty: %{value:.1f}<extra></extra>',
-        maxdepth=4
+        marker=dict(
+            colors=colors,
+            line=dict(width=2, color='#0f172a'),
+            cornerradius=5
+        ),
+        branchvalues="total",
+        customdata=custom_data,
+        hovertemplate=(
+            "<b>%{label}</b><br><br>"
+            "<b>Material ID:</b> %{customdata[0]}<br>"
+            "<b>Type:</b> %{customdata[1]}<br>"
+            "<b>Qty per Unit:</b> %{customdata[2]:.2f}<br>"
+            "<b>Components:</b> %{customdata[3]}"
+            "<extra></extra>"
+        ),
+        texttemplate="<b>%{label}</b><br>%{customdata[1]}",
+        textfont=dict(size=11, color='white'),
+        maxdepth=3,
+        pathbar=dict(
+            visible=True,
+            thickness=28,
+            textfont=dict(size=12, color='#e2e8f0'),
+            edgeshape='>'
+        )
     ))
     
     fig.update_layout(
         paper_bgcolor='#0f172a',
         plot_bgcolor='#0f172a',
         height=height,
-        margin=dict(t=10, l=10, r=10, b=10),
-        font=dict(color='#e2e8f0')
+        margin=dict(t=35, l=10, r=10, b=10),
+        font=dict(color='#e2e8f0'),
+        hoverlabel=dict(
+            bgcolor='#1e293b',
+            bordercolor='#334155',
+            font=dict(size=12, color='#e2e8f0', family='system-ui')
+        )
     )
     
     st.plotly_chart(fig, use_container_width=True, key="bom_tree")
@@ -647,10 +710,10 @@ def main():
     # ============================================
     # BOM HIERARCHY
     # ============================================
-    st.markdown('<div class="section-header">Bill of Materials Hierarchy</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">Bill of Materials Treemap</div>', unsafe_allow_html=True)
     st.markdown("""
     <p style="color: #94a3b8; margin-bottom: 1rem;">
-        Product structure showing how materials combine into finished goods. 
+        Product structure showing how materials combine into finished goods. Click to drill down, hover for details.
         <span style="color: #10b981;">■</span> Finished &nbsp;
         <span style="color: #8b5cf6;">■</span> Semi-finished &nbsp;
         <span style="color: #f59e0b;">■</span> Raw Materials
