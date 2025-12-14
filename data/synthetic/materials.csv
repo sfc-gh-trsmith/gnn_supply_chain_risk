@@ -1,0 +1,27 @@
+MATERIAL_ID,DESCRIPTION,MATERIAL_GROUP,UNIT_OF_MEASURE,CRITICALITY_SCORE,INVENTORY_DAYS
+M-1000,EV Battery Pack 85kWh,FIN,PC,1.0,31
+M-2001,Battery Module 400V,SEMI,PC,0.95,17
+M-2002,Battery Management System,SEMI,PC,0.9,21
+M-2003,Thermal Management Assembly,SEMI,PC,0.85,53
+M-2004,Battery Enclosure Assembly,SEMI,PC,0.8,42
+M-2005,High-Voltage Harness,SEMI,PC,0.85,37
+M-3001,Lithium Hydroxide Grade A,RAW,KG,0.95,35
+M-3002,Lithium Carbonate Battery Grade,RAW,KG,0.95,42
+M-3003,Cobalt Oxide Powder,RAW,KG,0.9,53
+M-3004,Nickel Sulfate Battery Grade,RAW,KG,0.85,47
+M-3005,Manganese Dioxide,RAW,KG,0.75,22
+M-3006,Synthetic Graphite Anode,RAW,KG,0.85,39
+M-3007,Silicon Anode Additive,RAW,KG,0.7,51
+M-3008,Copper Foil 8 Micron,RAW,KG,0.85,27
+M-3009,Copper Busbar 5mm,RAW,KG,0.8,31
+M-3010,Aluminum Foil 15 Micron,RAW,KG,0.8,17
+M-3011,Aluminum Housing Profile,RAW,KG,0.7,60
+M-3012,Electrolyte LiPF6 Solution,RAW,L,0.9,42
+M-3013,Ceramic Coated Separator,RAW,M2,0.9,15
+M-3014,BMS Controller IC,RAW,PC,0.85,48
+M-3015,Cell Monitoring ASIC,RAW,PC,0.85,49
+M-3016,Power MOSFET Module,RAW,PC,0.8,58
+M-3017,Thermal Interface Material,RAW,KG,0.75,57
+M-3018,Cooling Plate Aluminum,RAW,PC,0.7,27
+M-3019,High-Voltage Cable 35mm2,RAW,M,0.8,38
+M-3020,Connector Assembly HV,RAW,PC,0.75,42

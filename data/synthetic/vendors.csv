@@ -1,0 +1,51 @@
+VENDOR_ID,NAME,COUNTRY_CODE,CITY,PHONE,TIER,FINANCIAL_HEALTH_SCORE
+V10001,BHP Copper,MEX,Monterrey,+52-350-328-3286,1,0.78
+V10002,Antofagasta PLC,MEX,Monterrey,+52-132-130-2535,1,0.44
+V10003,First Quantum,USA,Charlotte,+1-325-559-5557,1,0.83
+V10004,Gamma Manufacturing,CHN,Shenzhen,+86-259-320-6514,1,0.37
+V10005,Freeport-McMoRan,JPN,Nagoya,+81-926-144-8527,1,0.65
+V10006,Freeport Cobalt,COD,Likasi,+243-949-743-6925,1,0.68
+V10007,Alpha Industries,DEU,Munich,+49-975-338-2654,1,0.55
+V10008,NXP Semiconductors,USA,Houston,+1-314-786-5374,1,0.76
+V10009,Codelco,MEX,Monterrey,+52-646-846-5010,1,0.41
+V10010,Umicore Materials,JPN,Osaka,+81-941-132-6168,1,0.56
+V10011,CALB,CHN,Beijing,+86-505-758-8517,1,0.39
+V10012,Theta Systems,CHN,Beijing,+86-508-470-4593,1,0.95
+V10013,Samsung SDI Co.,CHN,Guangzhou,+86-981-212-3504,1,0.71
+V10014,Zeta Precision,DEU,Berlin,+49-710-579-9669,1,0.46
+V10015,DuPont Electronics,USA,Charlotte,+1-868-373-6573,1,0.37
+V10016,STMicroelectronics,USA,Phoenix,+1-612-880-3927,1,0.63
+V10017,Southern Copper,CHN,Beijing,+86-256-482-3646,1,0.65
+V10018,Beta Components,DEU,Munich,+49-214-471-6038,1,0.46
+V10019,Gotion High-Tech,KOR,Seoul,+82-935-170-9727,1,0.8
+V10020,Mitsubishi Chemical,CHN,Guangzhou,+86-640-993-7932,1,0.93
+V10021,Epsilon Tech,AUS,Sydney,+61-548-629-8397,1,0.38
+V10022,Svolt Energy,KOR,Ulsan,+82-335-702-4608,1,0.3
+V10023,Texas Instruments,DEU,Munich,+49-980-438-2160,1,0.63
+V10024,BYD Battery,KOR,Daegu,+82-840-684-8744,1,0.46
+V10025,Infineon Technologies,USA,Phoenix,+1-774-541-6804,1,0.58
+V10026,Copper Corp 26,USA,Charlotte,+1-200-162-7596,1,0.77
+V10027,Ganfeng Lithium,CHL,Santiago,+56-649-559-3296,1,0.57
+V10028,Sumitomo Chemical,KOR,Busan,+82-927-982-2604,1,0.33
+V10029,BASF Materials,COD,Lubumbashi,+243-516-597-8886,1,0.44
+V10030,Renesas Electronics,USA,Charlotte,+1-499-371-8454,1,0.49
+V10031,3M Advanced Materials,MEX,Tijuana,+52-403-322-1958,1,0.68
+V10032,ON Semiconductor,USA,Houston,+1-614-973-9701,1,0.4
+V10033,Materials Corp 33,COD,Lubumbashi,+243-709-169-4853,1,0.56
+V10034,Albemarle Corp,AUS,Sydney,+61-734-183-7868,1,0.73
+V10035,Materials Corp 35,USA,Houston,+1-785-833-6147,1,0.46
+V10036,Materials Corp 36,JPN,Nagoya,+81-109-569-2638,1,0.35
+V10037,Panasonic Energy,KOR,Ulsan,+82-170-350-7054,1,0.49
+V10038,Copper Corp 38,USA,Houston,+1-641-108-5905,1,0.91
+V10039,LG Energy Solution,CHN,Shenzhen,+86-860-666-3546,1,0.48
+V10040,Materials Corp 40,MEX,Guadalajara,+52-803-749-5325,1,0.63
+V10041,EVE Energy,KOR,Seoul,+82-949-383-1722,1,0.3
+V10042,Electronics Corp 42,DEU,Frankfurt,+49-552-664-8007,1,0.66
+V10043,Delta Materials,CHN,Shenzhen,+86-540-230-1685,1,0.5
+V10044,Materials Corp 44,CHL,Santiago,+56-798-355-2684,1,0.53
+V10045,Copper Corp 45,USA,Phoenix,+1-258-342-3662,1,0.93
+V10046,Sigma Lithium,CHL,Concepcion,+56-440-901-7745,1,0.82
+V10047,SQM Mining,CHL,Antofagasta,+56-491-993-1634,1,0.86
+V10048,SK On,KOR,Daegu,+82-328-124-4164,1,0.56
+V10049,Generic Corp 49,KOR,Seoul,+82-459-756-9346,1,0.56
+V10050,Materials Corp 50,COD,Kinshasa,+243-998-367-3925,1,0.68

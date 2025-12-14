@@ -1,0 +1,14 @@
+name: gnn_supply_chain_risk
+channels:
+  - snowflake
+dependencies:
+  - python=3.11
+  - pandas
+  - numpy
+  - scipy
+  - scikit-learn
+  - networkx
+  - matplotlib
+  - seaborn
+  - tqdm
+

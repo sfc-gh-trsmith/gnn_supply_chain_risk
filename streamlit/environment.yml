@@ -1,0 +1,11 @@
+name: gnn_supply_chain_risk_app
+channels:
+  - snowflake
+dependencies:
+  - pandas
+  - numpy
+  - streamlit
+  - plotly
+  - networkx
+  - altair
+
