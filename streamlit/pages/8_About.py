@@ -12,7 +12,7 @@ from snowflake.snowpark.context import get_active_session
 
 # Add parent directory to path for utils import (needed for Streamlit in Snowflake)
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.sidebar import render_sidebar
+from utils.sidebar import render_sidebar, render_star_callout
 
 st.set_page_config(
     page_title="About",
@@ -147,6 +147,9 @@ st.markdown("""
 
 def main():
     """Main application."""
+    
+    # Render STAR callout if demo mode is enabled
+    render_star_callout("about")
     
     # Header
     st.markdown("""

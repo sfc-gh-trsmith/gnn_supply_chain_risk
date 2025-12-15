@@ -7,6 +7,7 @@ Interactive visualization of the supply chain network graph.
 import streamlit as st
 import json
 import plotly.graph_objects as go
+import pydeck as pdk
 import networkx as nx
 import sys
 from pathlib import Path
@@ -15,7 +16,36 @@ from snowflake.snowpark.context import get_active_session
 # Add parent directory to path for utils import (needed for Streamlit in Snowflake)
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.data_loader import run_queries_parallel
-from utils.sidebar import render_sidebar
+from utils.sidebar import render_sidebar, render_star_callout
+
+# Country coordinates (centroids) - ISO-3 to lat/lon mapping
+COUNTRY_COORDS = {
+    'CHN': {'lat': 35.8617, 'lon': 104.1954, 'name': 'China'},
+    'KOR': {'lat': 35.9078, 'lon': 127.7669, 'name': 'South Korea'},
+    'JPN': {'lat': 36.2048, 'lon': 138.2529, 'name': 'Japan'},
+    'USA': {'lat': 37.0902, 'lon': -95.7129, 'name': 'United States'},
+    'DEU': {'lat': 51.1657, 'lon': 10.4515, 'name': 'Germany'},
+    'MEX': {'lat': 23.6345, 'lon': -102.5528, 'name': 'Mexico'},
+    'CAN': {'lat': 56.1304, 'lon': -106.3468, 'name': 'Canada'},
+    'AUS': {'lat': -25.2744, 'lon': 133.7751, 'name': 'Australia'},
+    'BRA': {'lat': -14.2350, 'lon': -51.9253, 'name': 'Brazil'},
+    'IND': {'lat': 20.5937, 'lon': 78.9629, 'name': 'India'},
+    'GBR': {'lat': 55.3781, 'lon': -3.4360, 'name': 'United Kingdom'},
+    'FRA': {'lat': 46.2276, 'lon': 2.2137, 'name': 'France'},
+    'TWN': {'lat': 23.6978, 'lon': 120.9605, 'name': 'Taiwan'},
+    'VNM': {'lat': 14.0583, 'lon': 108.2772, 'name': 'Vietnam'},
+    'THA': {'lat': 15.8700, 'lon': 100.9925, 'name': 'Thailand'},
+    'IDN': {'lat': -0.7893, 'lon': 113.9213, 'name': 'Indonesia'},
+    'MYS': {'lat': 4.2105, 'lon': 101.9758, 'name': 'Malaysia'},
+    'PHL': {'lat': 12.8797, 'lon': 121.7740, 'name': 'Philippines'},
+    'SGP': {'lat': 1.3521, 'lon': 103.8198, 'name': 'Singapore'},
+    'CHL': {'lat': -35.6751, 'lon': -71.5430, 'name': 'Chile'},
+    'ARG': {'lat': -38.4161, 'lon': -63.6167, 'name': 'Argentina'},
+    'ZAF': {'lat': -30.5595, 'lon': 22.9375, 'name': 'South Africa'},
+    'COD': {'lat': -4.0383, 'lon': 21.7587, 'name': 'DR Congo'},
+}
+
+
 
 st.set_page_config(
     page_title="Supply Network",
@@ -619,6 +649,9 @@ def render_bom_tree(tree_data, height=500):
 def main():
     session = get_session()
     
+    # Render STAR callout if demo mode is enabled
+    render_star_callout("network")
+    
     # Load data
     stats = load_graph_stats(session)
     
@@ -730,9 +763,14 @@ def main():
     st.divider()
     
     # ============================================
-    # REGIONAL DISTRIBUTION (MAP)
+    # REGIONAL DISTRIBUTION
     # ============================================
     st.markdown('<div class="section-header">Geographic Distribution</div>', unsafe_allow_html=True)
+    st.markdown("""
+    <p style="color: #94a3b8; margin-bottom: 1rem;">
+        Supplier distribution by country with risk analysis. Column height shows vendor count, color shows risk level.
+    </p>
+    """, unsafe_allow_html=True)
     
     try:
         region_data = session.sql("""
@@ -741,41 +779,134 @@ def main():
                 r.REGION_NAME,
                 COUNT(*) as VENDOR_COUNT,
                 ROUND(AVG(rs.RISK_SCORE), 3) as AVG_RISK,
+                ROUND(AVG(v.FINANCIAL_HEALTH_SCORE), 3) as AVG_HEALTH,
                 r.GEOPOLITICAL_RISK,
-                r.NATURAL_DISASTER_RISK
+                r.NATURAL_DISASTER_RISK,
+                r.INFRASTRUCTURE_SCORE
             FROM VENDORS v
             LEFT JOIN REGIONS r ON v.COUNTRY_CODE = r.REGION_CODE
             LEFT JOIN RISK_SCORES rs ON v.VENDOR_ID = rs.NODE_ID
-            GROUP BY v.COUNTRY_CODE, r.REGION_NAME, r.GEOPOLITICAL_RISK, r.NATURAL_DISASTER_RISK
+            GROUP BY v.COUNTRY_CODE, r.REGION_NAME, r.GEOPOLITICAL_RISK, r.NATURAL_DISASTER_RISK, r.INFRASTRUCTURE_SCORE
             ORDER BY VENDOR_COUNT DESC
         """).to_pandas()
         
         if not region_data.empty:
-            # COUNTRY_CODE is already ISO-3 format from source data
-            region_data['AVG_RISK_DISPLAY'] = region_data['AVG_RISK'].fillna(0)
-            region_data['REGION_DISPLAY'] = region_data.apply(
+            # Compute combined risk and display fields
+            region_data['COMBINED_RISK'] = (
+                region_data['AVG_RISK'].fillna(0.3) * 0.4 +
+                region_data['GEOPOLITICAL_RISK'].fillna(0.3) * 0.3 +
+                region_data['NATURAL_DISASTER_RISK'].fillna(0.3) * 0.3
+            )
+            region_data['DISPLAY_NAME'] = region_data.apply(
                 lambda r: f"{r['REGION_NAME']} ({r['COUNTRY_CODE']})" if r['REGION_NAME'] else r['COUNTRY_CODE'], 
                 axis=1
             )
             
+            # Add coordinates for map visualization
+            region_data['lat'] = region_data['COUNTRY_CODE'].map(lambda x: COUNTRY_COORDS.get(x, {}).get('lat'))
+            region_data['lon'] = region_data['COUNTRY_CODE'].map(lambda x: COUNTRY_COORDS.get(x, {}).get('lon'))
+            region_data['COUNTRY_NAME'] = region_data['COUNTRY_CODE'].map(
+                lambda x: COUNTRY_COORDS.get(x, {}).get('name', x)
+            )
+            
+            # Data for map (only countries with coordinates)
+            map_data = region_data.dropna(subset=['lat', 'lon']).copy()
+            
+            # ============================================
+            # 3D WORLD MAP
+            # ============================================
+            if not map_data.empty:
+                # Risk to RGB color
+                def risk_to_color(risk):
+                    if risk < 0.3:
+                        return [16, 185, 129, 200]  # Green
+                    elif risk < 0.5:
+                        return [245, 158, 11, 200]  # Amber
+                    else:
+                        return [239, 68, 68, 200]   # Red
+                
+                map_data['color'] = map_data['COMBINED_RISK'].apply(risk_to_color)
+                map_data['elevation'] = map_data['VENDOR_COUNT'] * 100000
+                # Pre-format risk as percentage string for tooltip (pydeck doesn't support format specifiers)
+                map_data['RISK_DISPLAY'] = map_data['COMBINED_RISK'].apply(lambda x: f"{x:.0%}")
+                
+                layer = pdk.Layer(
+                    'ColumnLayer',
+                    data=map_data,
+                    get_position='[lon, lat]',
+                    get_elevation='elevation',
+                    elevation_scale=1,
+                    radius=300000,
+                    get_fill_color='color',
+                    pickable=True,
+                    auto_highlight=True,
+                )
+                
+                view_state = pdk.ViewState(
+                    latitude=20,
+                    longitude=0,
+                    zoom=0.9,
+                    pitch=45,
+                    bearing=0,
+                    min_zoom=0.5,
+                    max_zoom=6
+                )
+                
+                deck = pdk.Deck(
+                    layers=[layer],
+                    initial_view_state=view_state,
+                    tooltip={
+                        'html': '<b>{COUNTRY_NAME}</b><br>'
+                                'Vendors: {VENDOR_COUNT}<br>'
+                                'Risk: {RISK_DISPLAY}',
+                        'style': {
+                            'backgroundColor': '#1e293b',
+                            'color': '#e2e8f0',
+                            'borderRadius': '8px',
+                            'padding': '8px'
+                        }
+                    },
+                    # Use None to let Streamlit/Snowflake pick appropriate Carto/Mapbox style
+                    # This aligns with CSP allowlist and auto-injected tokens in SiS
+                    map_style=None
+                )
+                
+                st.pydeck_chart(deck, use_container_width=True)
+                
+                # Legend
+                st.markdown("""
+                <div style="display: flex; gap: 1.5rem; justify-content: center; margin-top: 0.5rem; margin-bottom: 1rem;">
+                    <span style="color: #94a3b8;"><span style="color: #10b981;">●</span> Low Risk (&lt;30%)</span>
+                    <span style="color: #94a3b8;"><span style="color: #f59e0b;">●</span> Medium Risk (30-50%)</span>
+                    <span style="color: #94a3b8;"><span style="color: #ef4444;">●</span> High Risk (&gt;50%)</span>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.warning("No geographic coordinates available for map visualization.")
+            
+            # ============================================
+            # BAR CHART + REGIONAL DETAILS
+            # ============================================
             col1, col2 = st.columns([3, 2])
             
             with col1:
-                st.markdown("**Suppliers by Country**")
-                
-                # Horizontal bar chart - reliable visualization
+                # Horizontal bar chart with rich tooltips
                 bar_fig = go.Figure(go.Bar(
                     x=region_data['VENDOR_COUNT'],
-                    y=region_data['REGION_DISPLAY'],
+                    y=region_data['DISPLAY_NAME'],
                     orientation='h',
                     marker=dict(
-                        color=region_data['AVG_RISK_DISPLAY'],
-                        colorscale=[[0, '#10b981'], [0.5, '#f59e0b'], [1, '#ef4444']],
+                        color=region_data['COMBINED_RISK'],
+                        colorscale=[
+                            [0, '#10b981'],
+                            [0.5, '#f59e0b'],
+                            [1, '#ef4444']
+                        ],
                         cmin=0,
                         cmax=1,
                         showscale=True,
                         colorbar=dict(
-                            title=dict(text="Avg Risk", font=dict(color='#e2e8f0', size=11)),
+                            title=dict(text="Risk", font=dict(color='#e2e8f0', size=11)),
                             tickfont=dict(color='#e2e8f0', size=10),
                             tickformat='.0%',
                             len=0.8
@@ -784,7 +915,23 @@ def main():
                     text=region_data['VENDOR_COUNT'],
                     textposition='outside',
                     textfont=dict(color='#e2e8f0', size=12),
-                    hovertemplate='<b>%{y}</b><br>Vendors: %{x}<br>Avg Risk: %{marker.color:.0%}<extra></extra>'
+                    customdata=list(zip(
+                        region_data['COMBINED_RISK'],
+                        region_data['AVG_HEALTH'].fillna(0),
+                        region_data['GEOPOLITICAL_RISK'].fillna(0),
+                        region_data['NATURAL_DISASTER_RISK'].fillna(0),
+                        region_data['INFRASTRUCTURE_SCORE'].fillna(0)
+                    )),
+                    hovertemplate=(
+                        "<b>%{y}</b><br><br>"
+                        "<b>Vendors:</b> %{x}<br>"
+                        "<b>Combined Risk:</b> %{customdata[0]:.0%}<br>"
+                        "<b>Avg Financial Health:</b> %{customdata[1]:.0%}<br>"
+                        "<b>Geopolitical Risk:</b> %{customdata[2]:.0%}<br>"
+                        "<b>Natural Disaster Risk:</b> %{customdata[3]:.0%}<br>"
+                        "<b>Infrastructure Score:</b> %{customdata[4]:.0%}<br>"
+                        "<extra></extra>"
+                    )
                 ))
                 
                 bar_fig.update_layout(
@@ -803,32 +950,44 @@ def main():
                         tickfont=dict(color='#e2e8f0', size=11),
                         autorange='reversed'
                     ),
-                    bargap=0.25
+                    bargap=0.25,
+                    hoverlabel=dict(
+                        bgcolor='#1e293b',
+                        bordercolor='#334155',
+                        font=dict(size=12, color='#e2e8f0', family='system-ui')
+                    )
                 )
                 
                 st.plotly_chart(bar_fig, use_container_width=True, key="geo_bar")
             
             with col2:
-                st.markdown("**Regional Risk Factors**")
+                st.markdown("**Regional Risk Summary**")
                 
-                # Show risk details for each region
+                # Show risk details for each region in styled cards
                 for _, row in region_data.iterrows():
-                    risk = row['AVG_RISK_DISPLAY']
+                    risk = row['COMBINED_RISK']
                     geo_risk = row.get('GEOPOLITICAL_RISK', 0) or 0
                     nat_risk = row.get('NATURAL_DISASTER_RISK', 0) or 0
+                    infra = row.get('INFRASTRUCTURE_SCORE', 0) or 0
+                    health = row.get('AVG_HEALTH', 0) or 0
                     
                     risk_color = '#ef4444' if risk >= 0.5 else '#f59e0b' if risk >= 0.3 else '#10b981'
                     
                     st.markdown(f"""
                     <div style="background: #1e293b; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; border-left: 3px solid {risk_color};">
-                        <div style="color: #f8fafc; font-weight: 600; margin-bottom: 0.25rem;">
-                            {row['REGION_NAME'] or row['COUNTRY_CODE']}
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="color: #f8fafc; font-weight: 600;">
+                                {row['REGION_NAME'] or row['COUNTRY_CODE']}
+                            </div>
+                            <div style="background: {risk_color}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
+                                {risk:.0%}
+                            </div>
                         </div>
-                        <div style="color: #94a3b8; font-size: 0.85rem;">
-                            {row['VENDOR_COUNT']} vendors · {risk:.0%} avg risk
+                        <div style="color: #94a3b8; font-size: 0.85rem; margin-top: 0.25rem;">
+                            {row['VENDOR_COUNT']} vendors · Health: {health:.0%}
                         </div>
                         <div style="color: #64748b; font-size: 0.75rem; margin-top: 0.25rem;">
-                            Geo: {geo_risk:.0%} · Natural: {nat_risk:.0%}
+                            Geo: {geo_risk:.0%} · Natural: {nat_risk:.0%} · Infra: {infra:.0%}
                         </div>
                     </div>
                     """, unsafe_allow_html=True)

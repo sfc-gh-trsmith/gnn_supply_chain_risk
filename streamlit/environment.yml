@@ -8,4 +8,5 @@ dependencies:
   - plotly
   - networkx
   - altair
+  - pydeck
 

@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 200">
+  <defs>
+    <style>
+      .text { font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+      .step-box { fill: white; stroke-width: 2; rx: 8; filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.05)); }
+      .step-num { font-size: 32px; font-weight: bold; fill: rgba(0,0,0,0.05); }
+      .step-title { font-size: 16px; font-weight: bold; fill: #1e293b; }
+      .step-desc { font-size: 12px; fill: #64748b; }
+      .arrow { stroke: #94a3b8; stroke-width: 2; marker-end: url(#arrowhead); fill: none; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#94a3b8" />
+    </marker>
+  </defs>
+
+  <!-- Step 1: Ingest -->
+  <g transform="translate(20, 50)">
+    <rect width="140" height="100" class="step-box" stroke="#3b82f6" />
+    <text x="70" y="80" text-anchor="middle" class="text step-num">1</text>
+    <text x="70" y="40" text-anchor="middle" class="text step-title">Ingest</text>
+    <text x="70" y="60" text-anchor="middle" class="text step-desc">ERP & Trade Data</text>
+    <circle cx="70" cy="85" r="3" fill="#3b82f6" opacity="0.5"/>
+  </g>
+
+  <!-- Arrow 1-2 -->
+  <path d="M 170 100 L 190 100" class="arrow" />
+
+  <!-- Step 2: Build -->
+  <g transform="translate(200, 50)">
+    <rect width="140" height="100" class="step-box" stroke="#8b5cf6" />
+    <text x="70" y="80" text-anchor="middle" class="text step-num">2</text>
+    <text x="70" y="40" text-anchor="middle" class="text step-title">Build</text>
+    <text x="70" y="60" text-anchor="middle" class="text step-desc">Graph Structure</text>
+    <circle cx="70" cy="85" r="3" fill="#8b5cf6" opacity="0.5"/>
+  </g>
+
+  <!-- Arrow 2-3 -->
+  <path d="M 350 100 L 370 100" class="arrow" />
+
+  <!-- Step 3: Infer -->
+  <g transform="translate(380, 50)">
+    <rect width="140" height="100" class="step-box" stroke="#d946ef" />
+    <text x="70" y="80" text-anchor="middle" class="text step-num">3</text>
+    <text x="70" y="40" text-anchor="middle" class="text step-title">Infer</text>
+    <text x="70" y="60" text-anchor="middle" class="text step-desc">Predict Links</text>
+    <circle cx="70" cy="85" r="3" fill="#d946ef" opacity="0.5"/>
+  </g>
+
+  <!-- Arrow 3-4 -->
+  <path d="M 530 100 L 550 100" class="arrow" />
+
+  <!-- Step 4: Propagate -->
+  <g transform="translate(560, 50)">
+    <rect width="140" height="100" class="step-box" stroke="#f59e0b" />
+    <text x="70" y="80" text-anchor="middle" class="text step-num">4</text>
+    <text x="70" y="40" text-anchor="middle" class="text step-title">Propagate</text>
+    <text x="70" y="60" text-anchor="middle" class="text step-desc">Calculate Risk</text>
+    <circle cx="70" cy="85" r="3" fill="#f59e0b" opacity="0.5"/>
+  </g>
+
+  <!-- Arrow 4-5 -->
+  <path d="M 710 100 L 730 100" class="arrow" />
+
+  <!-- Step 5: Visualize -->
+  <g transform="translate(740, 50)">
+    <rect width="140" height="100" class="step-box" stroke="#10b981" />
+    <text x="70" y="80" text-anchor="middle" class="text step-num">5</text>
+    <text x="70" y="40" text-anchor="middle" class="text step-title">Act</text>
+    <text x="70" y="60" text-anchor="middle" class="text step-desc">Visualize & Alert</text>
+    <circle cx="70" cy="85" r="3" fill="#10b981" opacity="0.5"/>
+  </g>
+
+</svg>

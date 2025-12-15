@@ -14,7 +14,7 @@ from snowflake.snowpark.context import get_active_session
 # Add parent directory to path for utils import (needed for Streamlit in Snowflake)
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.data_loader import run_queries_parallel
-from utils.sidebar import render_sidebar
+from utils.sidebar import render_sidebar, render_star_callout
 
 st.set_page_config(
     page_title="Risk Mitigation",
@@ -598,6 +598,9 @@ def main():
     
     # Render sidebar immediately (before heavy data loading)
     render_sidebar()
+    
+    # Render STAR callout if demo mode is enabled
+    render_star_callout("mitigation")
     
     # Load data
     high_risk = load_high_risk_suppliers(session)

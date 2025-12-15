@@ -14,7 +14,7 @@ from snowflake.snowpark.context import get_active_session
 # Add parent directory to path for utils import (needed for Streamlit in Snowflake)
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.data_loader import run_queries_parallel
-from utils.sidebar import render_sidebar
+from utils.sidebar import render_sidebar, render_star_callout
 
 st.set_page_config(
     page_title="Exploratory Analysis",
@@ -308,6 +308,9 @@ def render_data_flow_sankey(stats, height=350):
 
 def main():
     session = get_session()
+    
+    # Render STAR callout if demo mode is enabled
+    render_star_callout("exploratory")
     
     # Load data
     stats = load_data_statistics(session)

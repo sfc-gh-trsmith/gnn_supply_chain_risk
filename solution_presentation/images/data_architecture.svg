@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+  <defs>
+    <style>
+      .text { font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+      .header { font-size: 18px; font-weight: bold; fill: #1e293b; }
+      .label { font-size: 14px; fill: #334155; }
+      .sublabel { font-size: 11px; fill: #64748b; }
+      .box { fill: white; stroke: #cbd5e1; stroke-width: 2; rx: 6; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.05)); }
+      .db-cyl { fill: white; stroke: #3b82f6; stroke-width: 2; }
+      .arrow { stroke: #64748b; stroke-width: 2; marker-end: url(#arrowhead); fill: none; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#64748b" />
+    </marker>
+  </defs>
+
+  <!-- Left: Data Sources -->
+  <text x="150" y="40" text-anchor="middle" class="text header">Data Sources</text>
+
+  <!-- ERP -->
+  <rect x="50" y="70" width="200" height="140" class="box" style="stroke: #2563eb;" />
+  <text x="150" y="95" text-anchor="middle" class="text" style="font-weight: bold; fill: #1e40af;">Internal ERP</text>
+  
+  <rect x="70" y="110" width="160" height="25" fill="#eff6ff" stroke="none" rx="4"/>
+  <text x="150" y="127" text-anchor="middle" class="text label">Vendor Master</text>
+  
+  <rect x="70" y="140" width="160" height="25" fill="#eff6ff" stroke="none" rx="4"/>
+  <text x="150" y="157" text-anchor="middle" class="text label">Purchase Orders</text>
+  
+  <rect x="70" y="170" width="160" height="25" fill="#eff6ff" stroke="none" rx="4"/>
+  <text x="150" y="187" text-anchor="middle" class="text label">Bill of Materials</text>
+
+  <!-- Trade Data -->
+  <rect x="50" y="240" width="200" height="110" class="box" style="stroke: #d97706;" />
+  <text x="150" y="265" text-anchor="middle" class="text" style="font-weight: bold; fill: #b45309;">External Intelligence</text>
+
+  <rect x="70" y="280" width="160" height="25" fill="#fffbeb" stroke="none" rx="4"/>
+  <text x="150" y="297" text-anchor="middle" class="text label">Bills of Lading</text>
+
+  <rect x="70" y="310" width="160" height="25" fill="#fffbeb" stroke="none" rx="4"/>
+  <text x="150" y="327" text-anchor="middle" class="text label">Regional Risk Data</text>
+
+
+  <!-- Middle: Snowflake Data Cloud -->
+  <rect x="300" y="50" width="450" height="400" fill="#f8fafc" stroke="#94a3b8" stroke-width="1" rx="10" stroke-dasharray="5,5" />
+  <image href="https://upload.wikimedia.org/wikipedia/commons/f/ff/Snowflake_Logo.svg" x="680" y="60" width="40" height="40" opacity="0.5" />
+  <text x="525" y="480" text-anchor="middle" class="text label" style="font-weight: bold; fill: #64748b;">Snowflake Data Cloud</text>
+
+  <!-- Ingestion Arrows -->
+  <path d="M 250 140 L 340 200" class="arrow" />
+  <path d="M 250 295 L 340 250" class="arrow" />
+
+  <!-- Graph Model -->
+  <circle cx="525" cy="225" r="100" fill="white" stroke="#8b5cf6" stroke-width="3" />
+  <text x="525" y="180" text-anchor="middle" class="text header" fill="#7c3aed">Knowledge Graph</text>
+  
+  <!-- Nodes inside graph -->
+  <circle cx="480" cy="210" r="15" fill="#bfdbfe" /> <!-- Supplier -->
+  <text x="480" y="215" text-anchor="middle" class="text" style="font-size: 10px;">V</text>
+  
+  <circle cx="570" cy="210" r="15" fill="#bbf7d0" /> <!-- Part -->
+  <text x="570" y="215" text-anchor="middle" class="text" style="font-size: 10px;">P</text>
+  
+  <circle cx="525" cy="270" r="15" fill="#fecaca" /> <!-- Risk -->
+  <text x="525" y="275" text-anchor="middle" class="text" style="font-size: 10px;">R</text>
+
+  <!-- Edges inside graph -->
+  <line x1="495" y1="210" x2="555" y2="210" stroke="#94a3b8" stroke-width="2" />
+  <line x1="490" y1="222" x2="515" y2="260" stroke="#94a3b8" stroke-width="2" />
+
+  <text x="525" y="300" text-anchor="middle" class="text sublabel">Suppliers • Parts • Regions</text>
+
+  <!-- Output Arrows -->
+  <path d="M 625 225 L 680 225" class="arrow" />
+
+  <!-- Outputs -->
+  <rect x="680" y="160" width="100" height="130" class="box" style="stroke: #10b981;" />
+  <text x="730" y="185" text-anchor="middle" class="text" style="font-weight: bold; fill: #059669;">Outputs</text>
+  
+  <text x="730" y="210" text-anchor="middle" class="text sublabel">Risk Scores</text>
+  <text x="730" y="235" text-anchor="middle" class="text sublabel">Bottlenecks</text>
+  <text x="730" y="260" text-anchor="middle" class="text sublabel">Predicted Links</text>
+
+</svg>

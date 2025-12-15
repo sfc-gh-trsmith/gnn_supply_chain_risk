@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400">
+  <defs>
+    <style>
+      .text { font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+      .layer-box { stroke-width: 1; rx: 6; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.1)); }
+      .layer-title { font-size: 14px; font-weight: bold; fill: #475569; text-anchor: start; }
+      .tech-pill { rx: 15; stroke-width: 1; }
+      .tech-text { font-size: 13px; font-weight: 500; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <!-- Title -->
+  <text x="300" y="30" text-anchor="middle" class="text" font-size="20" font-weight="bold" fill="#1e293b">Technology Stack</text>
+
+  <!-- Layer 1: App Layer -->
+  <g transform="translate(50, 60)">
+    <rect width="500" height="80" class="layer-box" fill="#f0f9ff" stroke="#bae6fd" />
+    <text x="20" y="30" class="text layer-title">Application Layer</text>
+    
+    <!-- Streamlit -->
+    <g transform="translate(150, 20)">
+      <rect width="200" height="40" class="tech-pill" fill="white" stroke="#ef4444" />
+      <text x="100" y="25" class="text tech-text" fill="#ef4444">Streamlit in Snowflake</text>
+    </g>
+  </g>
+
+  <!-- Layer 2: Compute & ML -->
+  <g transform="translate(50, 160)">
+    <rect width="500" height="100" class="layer-box" fill="#f5f3ff" stroke="#ddd6fe" />
+    <text x="20" y="30" class="text layer-title">Compute & AI</text>
+    
+    <!-- PyG -->
+    <g transform="translate(100, 40)">
+      <rect width="140" height="36" class="tech-pill" fill="white" stroke="#8b5cf6" />
+      <text x="70" y="23" class="text tech-text" fill="#8b5cf6">PyTorch Geometric</text>
+    </g>
+
+    <!-- Snowpark Container Services -->
+    <g transform="translate(260, 40)">
+      <rect width="180" height="36" class="tech-pill" fill="white" stroke="#3b82f6" />
+      <text x="90" y="23" class="text tech-text" fill="#3b82f6">Snowpark Container Services</text>
+    </g>
+  </g>
+
+  <!-- Layer 3: Data Foundation -->
+  <g transform="translate(50, 280)">
+    <rect width="500" height="80" class="layer-box" fill="#f0fdf4" stroke="#bbf7d0" />
+    <text x="20" y="30" class="text layer-title">Data Foundation</text>
+    
+    <!-- Snowflake -->
+    <g transform="translate(150, 20)">
+      <rect width="200" height="40" class="tech-pill" fill="white" stroke="#29b5e8" />
+      <text x="100" y="25" class="text tech-text" fill="#29b5e8">Snowflake Data Cloud</text>
+    </g>
+  </g>
+
+  <!-- Connectors -->
+  <line x1="300" y1="140" x2="300" y2="160" stroke="#cbd5e1" stroke-width="2" />
+  <line x1="300" y1="260" x2="300" y2="280" stroke="#cbd5e1" stroke-width="2" />
+
+</svg>

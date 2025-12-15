@@ -185,13 +185,15 @@ gnn_supply_chain_risk/
 │   ├── environment.yml       # Streamlit conda environment
 │   ├── streamlit_app.py      # Main dashboard (Home page)
 │   ├── pages/                # Multi-page app
-│   │   ├── 1_About.py
+│   │   ├── 1_Executive_Summary.py
 │   │   ├── 2_Exploratory_Analysis.py
 │   │   ├── 3_Supply_Network.py
 │   │   ├── 4_Tier2_Analysis.py
-│   │   └── 5_Risk_Mitigation.py
-│   ├── utils/                # Shared utilities
-│   └── components/           # Custom visualization components
+│   │   ├── 5_Scenario_Simulator.py
+│   │   ├── 6_Command_Center.py
+│   │   ├── 7_Risk_Mitigation.py
+│   │   └── 8_About.py
+│   └── utils/                # Shared utilities
 │
 ├── data/synthetic/           # Pre-generated demo data (deterministic)
 │   ├── vendors.csv
@@ -300,12 +302,15 @@ Or navigate manually in Snowsight:
 
 | Page | Description |
 |------|-------------|
-| **Home** | Executive summary with top concentration risk visualization |
-| **About** | Technical documentation and data architecture |
+| **Home** | Landing page with supply chain overview |
+| **Executive Summary** | Strategic dashboard with portfolio-level health and KPIs |
 | **Exploratory Analysis** | Data source coverage and visibility gap analysis |
 | **Supply Network** | Interactive graph visualization of multi-tier relationships |
 | **Tier-2 Analysis** | Deep dive into bottlenecks and predicted links |
+| **Scenario Simulator** | What-if analysis for disruption scenarios |
+| **Command Center** | Operational monitoring and real-time alerts |
 | **Risk Mitigation** | Prioritized action items with AI-assisted analysis |
+| **About** | Technical documentation and data architecture |
 
 ### Check Status
 

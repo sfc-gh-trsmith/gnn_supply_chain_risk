@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500">
+  <defs>
+    <style>
+      .text { font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+      .node { stroke-width: 3; }
+      .tier1 { fill: #3b82f6; stroke: #1e3a8a; }
+      .tier2 { fill: #dc2626; stroke: #7f1d1d; }
+      .link { stroke: #94a3b8; stroke-width: 2; stroke-dasharray: 4; }
+      .label { font-size: 14px; fill: #1e293b; font-weight: bold; }
+      .alert-box { fill: #fef2f2; stroke: #dc2626; stroke-width: 1; rx: 8; }
+    </style>
+  </defs>
+
+  <!-- Central Tier 2 Node (Bottleneck) -->
+  <circle cx="250" cy="250" r="40" class="node tier2" />
+  <text x="250" y="255" text-anchor="middle" fill="white" font-size="24" font-weight="bold" font-family="Arial">!</text>
+  
+  <text x="250" y="315" text-anchor="middle" class="text label" fill="#dc2626">Hidden Tier 2</text>
+  <text x="250" y="330" text-anchor="middle" class="text" font-size="12" fill="#ef4444">High Risk Region</text>
+
+  <!-- Tier 1 Nodes (Suppliers) -->
+  <!-- Supplier A -->
+  <line x1="250" y1="250" x2="150" y2="100" class="link" />
+  <circle cx="150" cy="100" r="25" class="node tier1" />
+  <text x="150" y="70" text-anchor="middle" class="text label">Supplier A</text>
+  <text x="150" y="105" text-anchor="middle" fill="white" font-size="12">US</text>
+
+  <!-- Supplier B -->
+  <line x1="250" y1="250" x2="350" y2="100" class="link" />
+  <circle cx="350" cy="100" r="25" class="node tier1" />
+  <text x="350" y="70" text-anchor="middle" class="text label">Supplier B</text>
+  <text x="350" y="105" text-anchor="middle" fill="white" font-size="12">DE</text>
+
+  <!-- Supplier C -->
+  <line x1="250" y1="250" x2="400" y2="250" class="link" />
+  <circle cx="400" cy="250" r="25" class="node tier1" />
+  <text x="440" y="255" text-anchor="middle" class="text label">Supplier C</text>
+  <text x="400" y="255" text-anchor="middle" fill="white" font-size="12">JP</text>
+
+  <!-- Supplier D -->
+  <line x1="250" y1="250" x2="150" y2="380" class="link" />
+  <circle cx="150" cy="380" r="25" class="node tier1" />
+  <text x="150" y="420" text-anchor="middle" class="text label">Supplier D</text>
+  <text x="150" y="385" text-anchor="middle" fill="white" font-size="12">KR</text>
+
+  <!-- Alert Box -->
+  <g transform="translate(300, 350)">
+    <rect width="180" height="80" class="alert-box" />
+    <text x="20" y="30" class="text" font-weight="bold" fill="#dc2626">⚠️ Concentration Alert</text>
+    <text x="20" y="55" class="text" font-size="12" fill="#7f1d1d">4 diversified suppliers</text>
+    <text x="20" y="70" class="text" font-size="12" fill="#7f1d1d">depend on 1 risky source.</text>
+  </g>
+
+</svg>

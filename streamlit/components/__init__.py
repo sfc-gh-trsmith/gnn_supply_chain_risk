@@ -1,21 +1,14 @@
 """
-D3.js Visualization Components for Streamlit
+Visualization Components for Streamlit
 
-Reusable graph visualizations for supply chain risk analysis.
-Use these ONLY for structural visualizations (networks, hierarchies, flows).
-For statistical charts (scatter, bar, heatmaps), use Altair instead.
+Note: D3.js-based components were removed because external JavaScript CDN 
+imports are blocked by Snowflake's Content Security Policy (CSP).
+
+All visualizations in this app now use Plotly, which is natively supported
+in Streamlit for Snowflake via the snowflake conda channel.
+
+For complex network visualizations, see the Plotly-based implementations
+in the individual page files (e.g., pages/4_Tier2_Analysis.py).
 """
 
-from .d3_force_graph import render_force_graph, render_ego_graph
-from .d3_sankey import render_sankey
-from .d3_tree import render_tree
-from .d3_map import render_geo_map
-
-__all__ = [
-    'render_force_graph',
-    'render_ego_graph', 
-    'render_sankey',
-    'render_tree',
-    'render_geo_map'
-]
-
+__all__ = []

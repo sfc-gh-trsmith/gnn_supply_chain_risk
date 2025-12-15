@@ -3,23 +3,25 @@
 ###############################################################################
 # create_user.sh - Create a Snowflake user with access to a demo project
 #
-# This is a generic script that can be used with any Snowflake demo project.
-# It creates a new user and grants them necessary permissions based on the
-# project configuration provided via command-line options.
+# This script automatically infers project configuration from deploy.sh in the
+# current project directory. All inferred values can be overridden via CLI.
 #
 # Usage:
-#   ./create_user.sh --user USERNAME --connection CONNECTION --database DB --schema SCHEMA [OPTIONS]
+#   ./create_user.sh --user USERNAME [OPTIONS]
 #
 # Required:
 #   --user, -u NAME           Username to create
+#
+# Optional (auto-inferred from project if not specified):
 #   --connection, -c NAME     Snowflake CLI connection name
 #   --database, -d NAME       Project database name
 #   --schema, -s NAME         Project schema name
-#
-# Optional:
-#   --role, -r NAME           Role name (default: {DATABASE}_ROLE)
-#   --warehouse, -w NAME      Warehouse name (default: {DATABASE}_WH)
+#   --role, -r NAME           Role name
+#   --warehouse, -w NAME      Warehouse name
 #   --compute-pool NAME       Compute pool name (for notebook access)
+#   --prefix PREFIX           Environment prefix (e.g., DEV, PROD)
+#
+# Other Options:
 #   --password, -p PASS       Initial password (if not set, user must use SSO)
 #   --email EMAIL             User's email address
 #   --first-name NAME         User's first name
@@ -27,32 +29,73 @@
 #   --comment TEXT            Comment for the user
 #   --no-change-password      Do NOT force password change on first login
 #   --dry-run                 Show SQL without executing
+#   --show-config             Show inferred configuration and exit
 #   -h, --help                Show this help message
 #
 # Examples:
-#   # GNN Supply Chain Risk project
-#   ./create_user.sh -u demo_user -c demo -d GNN_SUPPLY_CHAIN_RISK -s GNN_SUPPLY_CHAIN_RISK -p TempPass123!
+#   # Minimal - just specify username (everything else inferred from project)
+#   ./create_user.sh -u demo_user -p TempPass123!
 #
-#   # With custom role and warehouse
-#   ./create_user.sh -u analyst -c prod -d MY_PROJECT -s MY_SCHEMA -r CUSTOM_ROLE -w CUSTOM_WH
+#   # Override connection
+#   ./create_user.sh -u demo_user -c prod -p TempPass123!
+#
+#   # Use environment prefix (matches deploy.sh --prefix option)
+#   ./create_user.sh -u demo_user --prefix DEV -p TempPass123!
+#
+#   # Show what would be inferred
+#   ./create_user.sh --show-config
 #
 #   # Dry run to see SQL
-#   ./create_user.sh -u test_user -c demo -d MY_DB -s MY_SCHEMA --dry-run
+#   ./create_user.sh -u test_user --dry-run
 ###############################################################################
 
 set -e
 set -o pipefail
 
-# Required parameters
+# Get the directory where this script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "$SCRIPT_DIR"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+###############################################################################
+# Auto-detect project configuration from deploy.sh
+###############################################################################
+
+# Defaults (will be overridden by deploy.sh if present)
+DEFAULT_CONNECTION_NAME="demo"
+DEFAULT_PROJECT_PREFIX=""
+DEFAULT_ENV_PREFIX=""
+
+# Try to read project settings from deploy.sh
+if [ -f "$SCRIPT_DIR/deploy.sh" ]; then
+    # Extract PROJECT_PREFIX from deploy.sh
+    DETECTED_PROJECT_PREFIX=$(grep -E '^PROJECT_PREFIX=' "$SCRIPT_DIR/deploy.sh" 2>/dev/null | head -1 | sed 's/PROJECT_PREFIX=["'"'"']*\([^"'"'"']*\)["'"'"']*/\1/')
+    if [ -n "$DETECTED_PROJECT_PREFIX" ]; then
+        DEFAULT_PROJECT_PREFIX="$DETECTED_PROJECT_PREFIX"
+    fi
+    
+    # Extract default CONNECTION_NAME from deploy.sh
+    DETECTED_CONNECTION=$(grep -E '^CONNECTION_NAME=' "$SCRIPT_DIR/deploy.sh" 2>/dev/null | head -1 | sed 's/CONNECTION_NAME=["'"'"']*\([^"'"'"']*\)["'"'"']*/\1/')
+    if [ -n "$DETECTED_CONNECTION" ]; then
+        DEFAULT_CONNECTION_NAME="$DETECTED_CONNECTION"
+    fi
+fi
+
+# Initialize with defaults (can be overridden by CLI)
 CONNECTION_NAME=""
 USER_NAME=""
 SNOWFLAKE_DATABASE=""
 SNOWFLAKE_SCHEMA=""
-
-# Optional parameters with defaults
 SNOWFLAKE_ROLE=""
 SNOWFLAKE_WAREHOUSE=""
 COMPUTE_POOL_NAME=""
+ENV_PREFIX=""
 PASSWORD=""
 EMAIL=""
 FIRST_NAME=""
@@ -60,34 +103,31 @@ LAST_NAME=""
 COMMENT=""
 MUST_CHANGE_PASSWORD="TRUE"
 DRY_RUN=false
-
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m'
-
-# Get the directory where this script is located
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd "$SCRIPT_DIR"
+SHOW_CONFIG=false
 
 # Function to display usage
 usage() {
     cat << EOF
-Usage: $0 --user USERNAME --connection CONNECTION --database DB --schema SCHEMA [OPTIONS]
+Usage: $0 --user USERNAME [OPTIONS]
 
 Create a Snowflake user with access to a demo project.
 
+This script auto-detects project configuration from deploy.sh in the current
+directory. Detected values can be overridden via command line options.
+
 Required:
   -u, --user NAME           Username to create
+
+Auto-Inferred (override with CLI if needed):
   -c, --connection NAME     Snowflake CLI connection name
   -d, --database NAME       Project database name
   -s, --schema NAME         Project schema name
-
-Optional:
-  -r, --role NAME           Role name (default: {DATABASE}_ROLE)
-  -w, --warehouse NAME      Warehouse name (default: {DATABASE}_WH)
+  -r, --role NAME           Role name
+  -w, --warehouse NAME      Warehouse name
   --compute-pool NAME       Compute pool name (for notebook access)
+  --prefix PREFIX           Environment prefix (e.g., DEV, PROD)
+
+Other Options:
   -p, --password PASS       Initial password (if not set, user must use SSO)
   --email EMAIL             User's email address
   --first-name NAME         User's first name
@@ -95,21 +135,33 @@ Optional:
   --comment TEXT            Comment for the user
   --no-change-password      Do NOT force password change on first login
   --dry-run                 Show SQL without executing
+  --show-config             Show inferred configuration and exit
   -h, --help                Show this help message
 
-Examples:
-  $0 -u demo_user -c demo -d GNN_SUPPLY_CHAIN_RISK -s GNN_SUPPLY_CHAIN_RISK -p TempPass123!
-  $0 -u analyst -c prod -d MY_PROJECT -s MY_SCHEMA -r CUSTOM_ROLE -w CUSTOM_WH
-  $0 -u test_user -c demo -d MY_DB -s MY_SCHEMA --dry-run
+EOF
 
-The user will receive:
-  - Project role with full demo access
-  - Access to database, schema, warehouse
-  - Read access to all tables and views
-  - Execute access to UDFs
-  - Access to Streamlit apps (if any)
-  - Access to Snowflake notebooks (if compute pool specified)
-  - Snowflake Cortex LLM access
+    # Show what's auto-detected
+    echo "Auto-Detected Configuration (from deploy.sh):"
+    if [ -n "$DEFAULT_PROJECT_PREFIX" ]; then
+        echo "  Project Prefix:    $DEFAULT_PROJECT_PREFIX"
+        echo "  Connection:        $DEFAULT_CONNECTION_NAME"
+        echo "  Database:          $DEFAULT_PROJECT_PREFIX"
+        echo "  Schema:            $DEFAULT_PROJECT_PREFIX"
+        echo "  Role:              ${DEFAULT_PROJECT_PREFIX}_ROLE"
+        echo "  Warehouse:         ${DEFAULT_PROJECT_PREFIX}_WH"
+        echo "  Compute Pool:      ${DEFAULT_PROJECT_PREFIX}_COMPUTE_POOL"
+    else
+        echo "  (No deploy.sh found - specify all parameters manually)"
+    fi
+    echo ""
+
+    cat << EOF
+Examples:
+  $0 -u demo_user -p TempPass123!           # Minimal - infer everything
+  $0 -u demo_user -c prod -p TempPass123!   # Override connection
+  $0 -u demo_user --prefix DEV              # Use DEV environment prefix
+  $0 --show-config                          # Show detected configuration
+  $0 -u test_user --dry-run                 # Preview SQL
 EOF
     exit 0
 }
@@ -154,6 +206,10 @@ while [[ $# -gt 0 ]]; do
             COMPUTE_POOL_NAME="$2"
             shift 2
             ;;
+        --prefix)
+            ENV_PREFIX="$2"
+            shift 2
+            ;;
         -p|--password)
             PASSWORD="$2"
             shift 2
@@ -182,40 +238,107 @@ while [[ $# -gt 0 ]]; do
             DRY_RUN=true
             shift
             ;;
+        --show-config)
+            SHOW_CONFIG=true
+            shift
+            ;;
         *)
             error_exit "Unknown option: $1\nUse --help for usage information"
             ;;
     esac
 done
 
-# Validate required parameters
-if [ -z "$USER_NAME" ]; then
-    error_exit "Missing required parameter: --user\nUse --help for usage information"
-fi
+###############################################################################
+# Apply Defaults and Build Configuration
+###############################################################################
 
+# Apply default connection if not specified
 if [ -z "$CONNECTION_NAME" ]; then
-    error_exit "Missing required parameter: --connection\nUse --help for usage information"
+    CONNECTION_NAME="$DEFAULT_CONNECTION_NAME"
 fi
 
+# Compute the full prefix (may include environment prefix)
+if [ -z "$DEFAULT_PROJECT_PREFIX" ]; then
+    # No deploy.sh found - require explicit parameters
+    if [ -z "$SNOWFLAKE_DATABASE" ] || [ -z "$SNOWFLAKE_SCHEMA" ]; then
+        error_exit "No deploy.sh found. Please specify --database and --schema explicitly.\nUse --help for usage information"
+    fi
+    FULL_PREFIX="$SNOWFLAKE_DATABASE"
+else
+    # Use project prefix, optionally with environment prefix
+    if [ -n "$ENV_PREFIX" ]; then
+        FULL_PREFIX="${ENV_PREFIX}_${DEFAULT_PROJECT_PREFIX}"
+    else
+        FULL_PREFIX="${DEFAULT_PROJECT_PREFIX}"
+    fi
+fi
+
+# Apply inferred values for any unspecified parameters
 if [ -z "$SNOWFLAKE_DATABASE" ]; then
-    error_exit "Missing required parameter: --database\nUse --help for usage information"
+    SNOWFLAKE_DATABASE="$FULL_PREFIX"
 fi
 
 if [ -z "$SNOWFLAKE_SCHEMA" ]; then
-    error_exit "Missing required parameter: --schema\nUse --help for usage information"
+    # Schema is the base project prefix (not environment-prefixed)
+    SNOWFLAKE_SCHEMA="$DEFAULT_PROJECT_PREFIX"
 fi
 
-# Set defaults for optional parameters
 if [ -z "$SNOWFLAKE_ROLE" ]; then
-    SNOWFLAKE_ROLE="${SNOWFLAKE_DATABASE}_ROLE"
+    SNOWFLAKE_ROLE="${FULL_PREFIX}_ROLE"
 fi
 
 if [ -z "$SNOWFLAKE_WAREHOUSE" ]; then
-    SNOWFLAKE_WAREHOUSE="${SNOWFLAKE_DATABASE}_WH"
+    SNOWFLAKE_WAREHOUSE="${FULL_PREFIX}_WH"
+fi
+
+if [ -z "$COMPUTE_POOL_NAME" ]; then
+    # Only set compute pool if we have a project prefix
+    if [ -n "$DEFAULT_PROJECT_PREFIX" ]; then
+        COMPUTE_POOL_NAME="${FULL_PREFIX}_COMPUTE_POOL"
+    fi
 fi
 
 if [ -z "$COMMENT" ]; then
     COMMENT="${SNOWFLAKE_DATABASE} Demo User"
+fi
+
+###############################################################################
+# Show Config Mode
+###############################################################################
+if [ "$SHOW_CONFIG" = true ]; then
+    echo "=================================================="
+    echo "Inferred Project Configuration"
+    echo "=================================================="
+    echo ""
+    if [ -f "$SCRIPT_DIR/deploy.sh" ]; then
+        echo -e "${GREEN}[OK]${NC} deploy.sh found in project directory"
+    else
+        echo -e "${YELLOW}[WARN]${NC} No deploy.sh found - using defaults"
+    fi
+    echo ""
+    echo "Configuration that will be used:"
+    echo "  Connection:     $CONNECTION_NAME"
+    echo "  Database:       $SNOWFLAKE_DATABASE"
+    echo "  Schema:         $SNOWFLAKE_SCHEMA"
+    echo "  Role:           $SNOWFLAKE_ROLE"
+    echo "  Warehouse:      $SNOWFLAKE_WAREHOUSE"
+    if [ -n "$COMPUTE_POOL_NAME" ]; then
+        echo "  Compute Pool:   $COMPUTE_POOL_NAME"
+    fi
+    if [ -n "$ENV_PREFIX" ]; then
+        echo "  Env Prefix:     $ENV_PREFIX"
+    fi
+    echo ""
+    echo "Override any value with CLI options. Use --help for details."
+    echo ""
+    exit 0
+fi
+
+###############################################################################
+# Validate Required Parameters
+###############################################################################
+if [ -z "$USER_NAME" ]; then
+    error_exit "Missing required parameter: --user\nUse --help for usage information"
 fi
 
 # Validate username format (alphanumeric and underscore only)
@@ -230,7 +353,7 @@ echo "=================================================="
 echo "Snowflake Demo - Create User"
 echo "=================================================="
 echo ""
-echo "Configuration:"
+echo "Configuration (auto-inferred from project):"
 echo "  User:       $USER_NAME_UPPER"
 echo "  Database:   $SNOWFLAKE_DATABASE"
 echo "  Schema:     $SNOWFLAKE_SCHEMA"
@@ -239,6 +362,11 @@ echo "  Warehouse:  $SNOWFLAKE_WAREHOUSE"
 if [ -n "$COMPUTE_POOL_NAME" ]; then
     echo "  Compute Pool: $COMPUTE_POOL_NAME"
 fi
+if [ -n "$ENV_PREFIX" ]; then
+    echo "  Env Prefix: $ENV_PREFIX"
+fi
+echo ""
+echo -e "${BLUE}[TIP]${NC} Use --show-config to see all inferred values"
 echo ""
 
 ###############################################################################
@@ -277,7 +405,7 @@ echo -e "${GREEN}[OK]${NC} Connection '$CONNECTION_NAME' verified"
 # Verify that the project is deployed (database exists)
 DB_CHECK=$(snow sql -c "$CONNECTION_NAME" -q "SHOW DATABASES LIKE '$SNOWFLAKE_DATABASE'" 2>&1)
 if ! echo "$DB_CHECK" | grep -q "$SNOWFLAKE_DATABASE"; then
-    error_exit "Database '$SNOWFLAKE_DATABASE' not found. Deploy the project first."
+    error_exit "Database '$SNOWFLAKE_DATABASE' not found. Deploy the project first with ./deploy.sh"
 fi
 echo -e "${GREEN}[OK]${NC} Database '$SNOWFLAKE_DATABASE' exists"
 

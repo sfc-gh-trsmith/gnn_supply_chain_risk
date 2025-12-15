@@ -16,7 +16,7 @@ from snowflake.snowpark.context import get_active_session
 # Add current directory to path for utils import (needed for Streamlit in Snowflake)
 sys.path.insert(0, str(Path(__file__).parent))
 from utils.data_loader import run_queries_parallel
-from utils.sidebar import render_sidebar
+from utils.sidebar import render_sidebar, render_star_callout
 
 # Page configuration
 st.set_page_config(
@@ -547,12 +547,13 @@ def load_region_exposure(_session):
 # TRADITIONAL BI VISUALIZATIONS - "Before" Picture
 # =============================================================================
 
-# Color palette (colorblind-safe)
+# Color palette - Snowflake brand colors + colorblind-safe accents
+# Per SNOWFLAKE_COLOR_SCHEME.md: Use Snowflake Blue as signature brand color
 BI_COLORS = {
-    'primary': '#3b82f6',      # Blue
+    'primary': '#29B5E8',      # Snowflake Blue (signature brand color)
     'secondary': '#10b981',    # Green  
     'tertiary': '#8b5cf6',     # Purple
-    'quaternary': '#f59e0b',   # Amber
+    'quaternary': '#f59e0b',   # Amber/Valencia Orange
     'neutral': '#64748b',      # Slate
     'chart_bg': 'rgba(30, 41, 59, 0.8)',
 }
@@ -1170,6 +1171,9 @@ def main():
     """Main application - The Storytelling Home Page."""
     session = get_session()
     
+    # Render STAR callout if demo mode is enabled
+    render_star_callout("home")
+    
     # Load data
     metrics = load_key_metrics(session)
     bottleneck, nodes, edges = load_illusion_data(session)
@@ -1555,8 +1559,8 @@ def main():
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.page_link("pages/2_Exploratory_Analysis.py", label="🔍 Exploratory Analysis", icon="🔍")
-        st.caption("Data sources and coverage analysis")
+        st.page_link("pages/1_Executive_Summary.py", label="📊 Executive Summary", icon="📊")
+        st.caption("Portfolio health and KPIs")
     
     with col2:
         st.page_link("pages/3_Supply_Network.py", label="🕸️ Supply Network", icon="🕸️")
@@ -1567,7 +1571,7 @@ def main():
         st.caption("Concentration points and inferred links")
     
     with col4:
-        st.page_link("pages/5_Risk_Mitigation.py", label="⚡ Risk Mitigation", icon="⚡")
+        st.page_link("pages/7_Risk_Mitigation.py", label="⚡ Risk Mitigation", icon="⚡")
         st.caption("Prioritization and action planning")
     
     # Sidebar with navigation

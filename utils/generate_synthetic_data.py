@@ -11,10 +11,19 @@ Datasets generated:
 3. purchase_orders.csv - Purchase Orders (100+ supplier-to-part relationships)
 4. trade_data.csv - External Trade Data with HIDDEN BOTTLENECK pattern
 
-The "Vulcan Materials Refiner" pattern:
-    A single Tier-2 supplier (Vulcan Materials Refiner) supplies 60% of the
-    battery manufacturers' lithium needs, creating a hidden single point of
-    failure that the GNN should discover.
+The "Queensland Minerals" pattern (HIDDEN CRITICAL RISK):
+    Queensland Minerals appears to be a minor lithium supplier (seemingly 15% 
+    of trade), but they're actually shipping to 70%+ of our battery manufacturers.
+    
+    This creates a hidden single point of failure that ONLY the GNN can discover:
+    - Traditional ERP shows diversified Tier-1 supply base (looks healthy)
+    - Bills of Lading analysis shows Queensland Minerals serving most manufacturers
+    - GNN link prediction reveals the hidden concentration
+    - Combined with Australia's elevated risk (regulatory changes, bushfire exposure,
+      water scarcity), this produces a CRITICAL risk rating
+    
+    The demo narrative: "Your ERP says you're diversified. The GNN found Queensland
+    Minerals is a hidden chokepoint serving 70% of your lithium supply chain."
 
 Usage:
     python utils/generate_synthetic_data.py
@@ -61,7 +70,14 @@ REGION_RISKS = {
     "MEX": {"base": 0.3, "geopolitical": 0.2, "natural": 0.3, "infrastructure": 0.6},
     "DEU": {"base": 0.1, "geopolitical": 0.1, "natural": 0.1, "infrastructure": 0.95},
     "CHL": {"base": 0.4, "geopolitical": 0.2, "natural": 0.6, "infrastructure": 0.7},  # High earthquake risk
-    "AUS": {"base": 0.2, "geopolitical": 0.1, "natural": 0.3, "infrastructure": 0.85},
+    # Australia: CRITICAL RISK due to:
+    # - New lithium export restrictions & critical minerals policy (2024)
+    # - Severe bushfire exposure in mining regions (Western Australia)  
+    # - Water scarcity affecting mining operations (drought conditions)
+    # - Remote locations, port congestion, distance from manufacturing hubs
+    # - Labor disputes in mining sector (recent strikes)
+    # - Single-source dependency for battery-grade lithium
+    "AUS": {"base": 0.80, "geopolitical": 0.85, "natural": 0.85, "infrastructure": 0.45},
     "COD": {"base": 0.7, "geopolitical": 0.8, "natural": 0.3, "infrastructure": 0.3},  # High risk
 }
 
@@ -368,17 +384,27 @@ def generate_trade_data(vendors: List[Dict], num_records: int = 150) -> List[Dic
     
     # The hidden Tier-2 suppliers (not in our vendor list)
     # Uses ISO 3166-1 alpha-3 codes
+    #
+    # NARRATIVE: Queensland Minerals is THE hidden critical bottleneck
+    # - Appears to have low concentration (15%) in raw shipment count
+    # - But ships to 70%+ of battery manufacturers (hidden dependency)
+    # - Australia region has elevated risk factors
+    # - GNN discovers this hidden concentration through link analysis
     tier2_suppliers = [
-        # THE BOTTLENECK - high concentration
-        {"name": "Vulcan Materials Refiner", "country": "CHL", "specialty": "lithium", "concentration": 0.60},
+        # THE HIDDEN CRITICAL BOTTLENECK - Queensland Minerals
+        # Higher concentration to battery manufacturers - creates hidden dependency
+        # ERP can't see this Tier-2 relationship, only GNN discovers it
+        {"name": "Queensland Minerals", "country": "AUS", "specialty": "lithium", "concentration": 0.25, 
+         "target_battery_mfg": True, "battery_coverage": 0.85},
+        # Other lithium suppliers (diversified, lower risk)
+        {"name": "Vulcan Materials Refiner", "country": "CHL", "specialty": "lithium", "concentration": 0.15},
+        {"name": "Atacama Mining Corp", "country": "CHL", "specialty": "lithium", "concentration": 0.12},
         # Other Tier-2 suppliers
         {"name": "Pacific Copper Mining", "country": "CHL", "specialty": "copper", "concentration": 0.25},
         {"name": "Congo Cobalt Mines", "country": "COD", "specialty": "cobalt", "concentration": 0.40},
         {"name": "Jiangxi Graphite Ltd", "country": "CHN", "specialty": "graphite", "concentration": 0.30},
         {"name": "Tokyo Chemical Works", "country": "JPN", "specialty": "electrolyte", "concentration": 0.35},
         {"name": "Bavaria Specialty Metals", "country": "DEU", "specialty": "nickel", "concentration": 0.20},
-        {"name": "Queensland Minerals", "country": "AUS", "specialty": "lithium", "concentration": 0.15},
-        {"name": "Atacama Mining Corp", "country": "CHL", "specialty": "lithium", "concentration": 0.10},
         {"name": "Shanghai Battery Materials", "country": "CHN", "specialty": "cathode", "concentration": 0.25},
         {"name": "Korean Precision Chemicals", "country": "KOR", "specialty": "separator", "concentration": 0.30},
     ]
@@ -408,20 +434,36 @@ def generate_trade_data(vendors: List[Dict], num_records: int = 150) -> List[Dic
     base_date = datetime(2023, 1, 1)
     bol_id = 88001
     
+    # Track which battery manufacturers Queensland Minerals has shipped to
+    # Goal: Ensure 70%+ coverage of battery manufacturers
+    qm_battery_targets = set()
+    if battery_manufacturers:
+        # Pre-select 70% of battery manufacturers to receive from Queensland Minerals
+        num_to_cover = max(1, int(len(battery_manufacturers) * 0.70))
+        qm_target_list = random.sample(battery_manufacturers, num_to_cover)
+        qm_battery_targets = {v["VENDOR_ID"] for v in qm_target_list}
+    
     for i in range(num_records):
         # Select a Tier-2 supplier
         tier2 = random.choice(tier2_suppliers)
         
         # Select a consignee (our Tier-1 vendors)
-        # For the bottleneck (Vulcan), ensure high concentration to battery manufacturers
-        if tier2["name"] == "Vulcan Materials Refiner":
-            # 60% of lithium shipments go to battery manufacturers
-            if random.random() < tier2["concentration"] and battery_manufacturers:
-                consignee = random.choice(battery_manufacturers)
+        # QUEENSLAND MINERALS: The hidden critical bottleneck
+        # - Ships to 70%+ of battery manufacturers (hidden concentration)
+        # - Appears to have moderate shipment count, but serves MOST critical customers
+        if tier2["name"] == "Queensland Minerals":
+            battery_coverage = tier2.get("battery_coverage", 0.70)
+            if battery_manufacturers and random.random() < battery_coverage:
+                # Ship to one of the targeted battery manufacturers
+                target_mfgs = [v for v in battery_manufacturers if v["VENDOR_ID"] in qm_battery_targets]
+                if target_mfgs:
+                    consignee = random.choice(target_mfgs)
+                else:
+                    consignee = random.choice(battery_manufacturers)
             else:
                 consignee = random.choice(vendors)
         else:
-            # Normal distribution
+            # Normal distribution for other suppliers
             if random.random() < tier2["concentration"]:
                 # Use specialty matching
                 if tier2["specialty"] == "lithium" and battery_manufacturers:
@@ -600,10 +642,24 @@ def main():
     print(f"  - Trade records: {len(trade_data)}")
     print(f"  - Regions: {len(regions)}")
     print()
-    print("Hidden bottleneck pattern:")
-    vulcan_count = sum(1 for t in trade_data if t["SHIPPER_NAME"] == "Vulcan Materials Refiner")
-    print(f"  - 'Vulcan Materials Refiner' appears in {vulcan_count} trade records")
-    print(f"  - This represents ~{vulcan_count * 100 // len(trade_data)}% of trade activity")
+    print("Hidden bottleneck pattern (Queensland Minerals):")
+    qm_records = [t for t in trade_data if t["SHIPPER_NAME"] == "Queensland Minerals"]
+    qm_count = len(qm_records)
+    qm_unique_consignees = len(set(t["CONSIGNEE_NAME"] for t in qm_records))
+    battery_keywords = ["battery", "energy", "sdi", "lg", "catl", "byd", "panasonic", "sk", "aesc"]
+    qm_battery_consignees = len(set(
+        t["CONSIGNEE_NAME"] for t in qm_records 
+        if any(kw in t["CONSIGNEE_NAME"].lower() for kw in battery_keywords)
+    ))
+    print(f"  - 'Queensland Minerals' appears in {qm_count} trade records ({qm_count * 100 // len(trade_data)}% of shipments)")
+    print(f"  - Ships to {qm_unique_consignees} unique consignees")
+    print(f"  - Including {qm_battery_consignees} battery manufacturers (HIDDEN CONCENTRATION)")
+    print()
+    print("Why this is a CRITICAL risk:")
+    print("  - ERP shows diversified Tier-1 suppliers (healthy looking)")
+    print("  - GNN discovers Queensland Minerals serves 70%+ of battery mfgs")
+    print("  - Australia region: elevated regulatory, bushfire & water risks")
+    print("  - Single point of failure only visible through network analysis")
     print()
     print("Next steps:")
     print("  1. Upload data to Snowflake: snow sql -c demo -f sql/01_setup.sql")

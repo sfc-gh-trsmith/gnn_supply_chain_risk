@@ -11,5 +11,6 @@ entities:
       - streamlit_app.py
       - pages/
       - utils/
+      - assets/
       - environment.yml
 
