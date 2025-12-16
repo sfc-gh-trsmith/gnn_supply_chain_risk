@@ -18,7 +18,7 @@
     <rect width="140" height="100" class="step-box" stroke="#3b82f6" />
     <text x="70" y="80" text-anchor="middle" class="text step-num">1</text>
     <text x="70" y="40" text-anchor="middle" class="text step-title">Ingest</text>
-    <text x="70" y="60" text-anchor="middle" class="text step-desc">ERP & Trade Data</text>
+    <text x="70" y="60" text-anchor="middle" class="text step-desc">ERP &amp; Trade Data</text>
     <circle cx="70" cy="85" r="3" fill="#3b82f6" opacity="0.5"/>
   </g>
 
@@ -66,7 +66,7 @@
     <rect width="140" height="100" class="step-box" stroke="#10b981" />
     <text x="70" y="80" text-anchor="middle" class="text step-num">5</text>
     <text x="70" y="40" text-anchor="middle" class="text step-title">Act</text>
-    <text x="70" y="60" text-anchor="middle" class="text step-desc">Visualize & Alert</text>
+    <text x="70" y="60" text-anchor="middle" class="text step-desc">Visualize &amp; Alert</text>
     <circle cx="70" cy="85" r="3" fill="#10b981" opacity="0.5"/>
   </g>
 

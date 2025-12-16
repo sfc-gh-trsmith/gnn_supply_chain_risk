@@ -27,7 +27,7 @@
   <!-- Layer 2: Compute & ML -->
   <g transform="translate(50, 160)">
     <rect width="500" height="100" class="layer-box" fill="#f5f3ff" stroke="#ddd6fe" />
-    <text x="20" y="30" class="text layer-title">Compute & AI</text>
+    <text x="20" y="30" class="text layer-title">Compute &amp; AI</text>
     
     <!-- PyG -->
     <g transform="translate(100, 40)">
