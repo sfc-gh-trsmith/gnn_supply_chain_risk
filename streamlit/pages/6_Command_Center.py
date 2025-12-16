@@ -20,7 +20,7 @@ from utils.sidebar import render_sidebar, render_star_callout
 
 st.set_page_config(
     page_title="Command Center",
-    page_icon="📡",
+    page_icon=None,
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -517,7 +517,7 @@ def main():
     # HEADER
     # ============================================
     st.markdown("""
-    <div class="page-header">📡 Command Center</div>
+    <div class="page-header">Command Center</div>
     <div class="page-subheader">Operational monitoring and alert management</div>
     """, unsafe_allow_html=True)
     
@@ -661,7 +661,7 @@ def main():
         # Quick Actions
         st.markdown("#### Quick Actions")
         
-        if st.button("📋 Export Alert Report", use_container_width=True):
+        if st.button("Export Alert Report", use_container_width=True):
             if alerts:
                 df = pd.DataFrame(alerts)
                 csv = df.to_csv(index=False)
@@ -673,7 +673,7 @@ def main():
                     key="download_alerts"
                 )
         
-        if st.button("🔄 Refresh Alerts", use_container_width=True):
+        if st.button("Refresh Alerts", use_container_width=True):
             st.cache_data.clear()
             st.rerun()
     
@@ -735,7 +735,7 @@ def main():
         <div style="background: rgba(30, 41, 59, 0.8); border-radius: 12px; padding: 1.5rem; text-align: center;">
             <div style="font-size: 2.5rem; font-weight: 800; color: #10b981;">< 24h</div>
             <div style="color: #64748b; font-size: 0.85rem;">Avg Response Time</div>
-            <div style="color: #10b981; font-size: 0.8rem; margin-top: 0.5rem;">✓ Within SLA</div>
+            <div style="color: #10b981; font-size: 0.8rem; margin-top: 0.5rem;">Within SLA</div>
         </div>
         """, unsafe_allow_html=True)
     
@@ -756,7 +756,7 @@ def main():
         <div style="background: rgba(30, 41, 59, 0.8); border-radius: 12px; padding: 1.5rem; text-align: center;">
             <div style="font-size: 2.5rem; font-weight: 800; color: #10b981;">Live</div>
             <div style="color: #64748b; font-size: 0.85rem;">Risk Scores</div>
-            <div style="color: #10b981; font-size: 0.8rem; margin-top: 0.5rem;">✓ Real-time</div>
+            <div style="color: #10b981; font-size: 0.8rem; margin-top: 0.5rem;">Real-time</div>
         </div>
         """, unsafe_allow_html=True)
 

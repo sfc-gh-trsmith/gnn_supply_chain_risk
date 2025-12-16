@@ -16,7 +16,7 @@ from utils.sidebar import render_sidebar, render_star_callout
 
 st.set_page_config(
     page_title="About",
-    page_icon="ℹ️",
+    page_icon=None,
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -153,7 +153,7 @@ def main():
     
     # Header
     st.markdown("""
-    <div class="page-header">ℹ️ About This Demo</div>
+    <div class="page-header">About This Demo</div>
     <div class="page-subheader">
         AI-Driven N-Tier Supply Chain Resilience using Graph Neural Networks
     </div>
@@ -169,7 +169,7 @@ def main():
     with col1:
         st.markdown("""
         <div class="info-card">
-            <h3>🎯 The Problem: Tier-N Blindness</h3>
+            <h3>The Problem: Tier-N Blindness</h3>
             <p>
                 Modern supply chains are brittle because visibility typically ends at "Tier 1"—the direct suppliers. 
                 A company might believe its supply chain is resilient because it sources a critical component from 
@@ -187,7 +187,7 @@ def main():
     with col2:
         st.markdown("""
         <div class="info-card">
-            <h3>💡 The Solution</h3>
+            <h3>The Solution</h3>
             <p>
                 We model the supply chain as a <strong>Knowledge Graph</strong> and use 
                 <strong>Graph Neural Networks (GNNs)</strong> to:
@@ -217,7 +217,7 @@ def main():
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.markdown("#### 📊 Internal ERP Data")
+        st.markdown("#### Internal ERP Data")
         st.markdown("""
         <div class="table-card">
             <span class="table-name">VENDORS</span>
@@ -251,7 +251,7 @@ def main():
         """, unsafe_allow_html=True)
     
     with col2:
-        st.markdown("#### 🌐 External Trade Intelligence")
+        st.markdown("#### External Trade Intelligence")
         st.markdown("""
         <div class="table-card">
             <span class="table-name">BILLS_OF_LADING</span>
@@ -277,7 +277,7 @@ def main():
         """, unsafe_allow_html=True)
     
     with col3:
-        st.markdown("#### 🤖 Model Outputs")
+        st.markdown("#### Model Outputs")
         st.markdown("""
         <div class="table-card">
             <span class="table-name">RISK_SCORES</span>
@@ -314,7 +314,7 @@ def main():
     with col1:
         st.markdown("""
         <div class="info-card">
-            <h3>📓 Notebook Overview</h3>
+            <h3>Notebook Overview</h3>
             <p>
                 The Snowflake Notebook implements a complete Graph Neural Network pipeline using 
                 <strong>PyTorch Geometric (PyG)</strong> running natively in Snowflake.
@@ -334,7 +334,7 @@ def main():
     with col2:
         st.markdown("""
         <div class="info-card">
-            <h3>⚙️ Technical Details</h3>
+            <h3>Technical Details</h3>
             <p><strong>Model Architecture:</strong></p>
             <ul style="color: #94a3b8;">
                 <li><strong>Encoder:</strong> GraphSAGE with HeteroConv layers</li>
@@ -350,7 +350,7 @@ def main():
         """, unsafe_allow_html=True)
     
     # Workflow steps
-    st.markdown("#### 🔄 Analysis Workflow", unsafe_allow_html=True)
+    st.markdown("#### Analysis Workflow", unsafe_allow_html=True)
     
     col1, col2, col3, col4 = st.columns(4)
     
@@ -398,21 +398,21 @@ def main():
     with col1:
         st.markdown("""
         <div class="info-card">
-            <h3>🏠 Home</h3>
+            <h3>Home</h3>
             <p>Executive dashboard with key metrics, top concentration risk visualization, and navigation to analysis modules.</p>
         </div>
         """, unsafe_allow_html=True)
         
         st.markdown("""
         <div class="info-card">
-            <h3>🔍 Exploratory Analysis</h3>
+            <h3>Exploratory Analysis</h3>
             <p>Data source overview showing connected tables, record counts, and the visibility gap between known Tier-1 and inferred Tier-2+ relationships.</p>
         </div>
         """, unsafe_allow_html=True)
         
         st.markdown("""
         <div class="info-card">
-            <h3>🕸️ Supply Network</h3>
+            <h3>Supply Network</h3>
             <p>Interactive force-directed graph visualization of the multi-tier supply network with node filtering and relationship exploration.</p>
         </div>
         """, unsafe_allow_html=True)
@@ -420,21 +420,21 @@ def main():
     with col2:
         st.markdown("""
         <div class="info-card">
-            <h3>🔎 Tier-2 Analysis</h3>
+            <h3>Tier-2 Analysis</h3>
             <p>Deep dive into concentration risk with bottleneck identification, predicted link analysis, and confidence scoring.</p>
         </div>
         """, unsafe_allow_html=True)
         
         st.markdown("""
         <div class="info-card">
-            <h3>⚡ Risk Mitigation</h3>
+            <h3>Risk Mitigation</h3>
             <p>Prioritized action items with impact/probability matrix, AI-assisted analysis, and mitigation recommendations.</p>
         </div>
         """, unsafe_allow_html=True)
         
         st.markdown("""
         <div class="info-card">
-            <h3>ℹ️ About</h3>
+            <h3>About</h3>
             <p>This page! Documentation of the demo architecture, data sources, and technical implementation.</p>
         </div>
         """, unsafe_allow_html=True)
@@ -467,7 +467,7 @@ def main():
     with col1:
         st.markdown("""
         <div class="info-card">
-            <h3>☁️ Snowflake Platform</h3>
+            <h3>Snowflake Platform</h3>
             <p>
                 All data, compute, and AI run within Snowflake's secure governance boundary. 
                 No data movement required.
@@ -478,7 +478,7 @@ def main():
     with col2:
         st.markdown("""
         <div class="info-card">
-            <h3>🧠 Graph Neural Networks</h3>
+            <h3>Graph Neural Networks</h3>
             <p>
                 PyTorch Geometric enables sophisticated graph-based machine learning for 
                 link prediction and risk propagation.
@@ -489,7 +489,7 @@ def main():
     with col3:
         st.markdown("""
         <div class="info-card">
-            <h3>📊 Interactive Visualization</h3>
+            <h3>Interactive Visualization</h3>
             <p>
                 Streamlit provides a modern, responsive interface with Plotly charts 
                 and custom D3.js components.
@@ -506,7 +506,7 @@ def main():
     
     st.markdown("""
     <div class="info-card">
-        <h3>🚀 Quick Start Guide</h3>
+        <h3>Quick Start Guide</h3>
         <ol style="color: #94a3b8; line-height: 2;">
             <li><strong>Run the Setup:</strong> Execute the SQL scripts to create the database, schema, and load sample data</li>
             <li><strong>Execute the Notebook:</strong> Open the GNN notebook in Snowflake and run all cells to generate risk scores, predicted links, and bottlenecks</li>
@@ -520,7 +520,7 @@ def main():
     st.markdown("")
     st.markdown("""
     <p style="text-align: center; color: #64748b; font-size: 0.85rem; margin-top: 2rem;">
-        Built with ❄️ Snowflake &nbsp;|&nbsp; 🔗 PyTorch Geometric &nbsp;|&nbsp; 🎨 Streamlit
+        Built with Snowflake | PyTorch Geometric | Streamlit
     </p>
     """, unsafe_allow_html=True)
     

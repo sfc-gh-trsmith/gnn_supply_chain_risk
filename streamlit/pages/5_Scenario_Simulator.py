@@ -18,10 +18,15 @@ from snowflake.snowpark.context import get_active_session
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.data_loader import run_queries_parallel
 from utils.sidebar import render_sidebar, render_star_callout
+from utils.risk_narratives import (
+    render_risk_intelligence_card,
+    has_critical_narrative,
+    get_region_narrative,
+)
 
 st.set_page_config(
     page_title="Scenario Simulator",
-    page_icon="🔮",
+    page_icon=None,
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -475,7 +480,7 @@ def main():
     # HEADER
     # ============================================
     st.markdown("""
-    <div class="page-header">🔮 Scenario Simulator</div>
+    <div class="page-header">Scenario Simulator</div>
     <div class="page-subheader">What-if analysis: simulate disruptions and understand cascading impacts</div>
     """, unsafe_allow_html=True)
     
@@ -510,15 +515,25 @@ def main():
                 
                 # Show region risk info
                 region_info = regions[regions['REGION_CODE'] == selected_region].iloc[0]
-                st.markdown(f"""
-                <div style="background: rgba(30, 41, 59, 0.6); border-radius: 8px; padding: 1rem; margin-top: 1rem;">
-                    <div style="color: #94a3b8; font-size: 0.85rem;">
-                        <div>Geopolitical Risk: <strong style="color: #f8fafc;">{region_info['GEOPOLITICAL_RISK']:.0%}</strong></div>
-                        <div>Natural Disaster Risk: <strong style="color: #f8fafc;">{region_info['NATURAL_DISASTER_RISK']:.0%}</strong></div>
-                        <div>Vendors in Region: <strong style="color: #f8fafc;">{region_info['VENDOR_COUNT']}</strong></div>
+                
+                # Check if this region has a detailed risk narrative (AUS, COD)
+                if has_critical_narrative(selected_region):
+                    # Show full Risk Intelligence card
+                    st.markdown(
+                        render_risk_intelligence_card(selected_region, show_bottleneck=True),
+                        unsafe_allow_html=True
+                    )
+                else:
+                    # Show basic region info for other regions
+                    st.markdown(f"""
+                    <div style="background: rgba(30, 41, 59, 0.6); border-radius: 8px; padding: 1rem; margin-top: 1rem;">
+                        <div style="color: #94a3b8; font-size: 0.85rem;">
+                            <div>Geopolitical Risk: <strong style="color: #f8fafc;">{region_info['GEOPOLITICAL_RISK']:.0%}</strong></div>
+                            <div>Natural Disaster Risk: <strong style="color: #f8fafc;">{region_info['NATURAL_DISASTER_RISK']:.0%}</strong></div>
+                            <div>Vendors in Region: <strong style="color: #f8fafc;">{region_info['VENDOR_COUNT']}</strong></div>
+                        </div>
                     </div>
-                </div>
-                """, unsafe_allow_html=True)
+                    """, unsafe_allow_html=True)
             else:
                 st.warning("No regions with suppliers available.")
                 selected_region = None
@@ -556,7 +571,7 @@ def main():
         
         # Simulation button
         st.markdown("")
-        run_simulation = st.button("🚀 Run Simulation", type="primary", use_container_width=True)
+        run_simulation = st.button("Run Simulation", type="primary", use_container_width=True)
     
     with col2:
         st.markdown("#### Impact Preview")
@@ -726,7 +741,7 @@ def main():
                         
                         st.markdown(f"""
                         <div class="alternative-card">
-                            <h5>✓ {name}</h5>
+                            <h5>{name}</h5>
                             <p>Country: {country} · Risk: {risk:.0%}<br>Can supply: {material}</p>
                         </div>
                         """, unsafe_allow_html=True)
@@ -741,7 +756,7 @@ def main():
             if not downstream.empty:
                 st.markdown("""
                 <div class="impact-card">
-                    <h3>⚠️ Production at Risk</h3>
+                    <h3>Production at Risk</h3>
                     <p>The following finished products may be affected by this disruption:</p>
                 </div>
                 """, unsafe_allow_html=True)
@@ -765,7 +780,7 @@ def main():
         # Summary insight
         st.markdown(f"""
         <div class="scenario-result">
-            <h3 style="color: #3b82f6; margin-bottom: 0.5rem;">📊 Scenario Summary</h3>
+            <h3 style="color: #3b82f6; margin-bottom: 0.5rem;">Scenario Summary</h3>
             <p style="color: #e2e8f0; line-height: 1.6;">
                 A disruption at <strong>{disruption_source}</strong> would directly affect 
                 <strong>{len(affected_vendors)} vendor(s)</strong> and put 
@@ -780,7 +795,7 @@ def main():
         # No simulation run yet
         st.markdown("""
         <div class="scenario-result">
-            <h3 style="color: #3b82f6; margin-bottom: 0.5rem;">🎯 How to Use</h3>
+            <h3 style="color: #3b82f6; margin-bottom: 0.5rem;">How to Use</h3>
             <p style="color: #e2e8f0; line-height: 1.6;">
                 1. Select a <strong>disruption type</strong> — regional event or specific Tier-2 supplier failure<br>
                 2. Choose the <strong>affected region or supplier</strong> from the dropdown<br>

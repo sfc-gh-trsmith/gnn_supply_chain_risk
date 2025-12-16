@@ -18,7 +18,7 @@ from utils.sidebar import render_sidebar, render_star_callout
 
 st.set_page_config(
     page_title="Exploratory Analysis",
-    page_icon="🔍",
+    page_icon=None,
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -321,7 +321,7 @@ def main():
     # HEADER
     # ============================================
     st.markdown("""
-    <div class="page-header">🔍 Exploratory Analysis</div>
+    <div class="page-header">Exploratory Analysis</div>
     <div class="page-subheader">Data sources, coverage analysis, and pipeline status</div>
     """, unsafe_allow_html=True)
     
@@ -359,7 +359,7 @@ def main():
         v = stats.get('VENDORS', {})
         st.markdown(f"""
         <div class="data-card">
-            <h3>🏭 Vendors <span class="internal-badge">ERP</span></h3>
+            <h3>Vendors <span class="internal-badge">ERP</span></h3>
             <div class="data-count">{v.get('count', 0):,}</div>
             <p>{v.get('description', '')}</p>
         </div>
@@ -369,7 +369,7 @@ def main():
         m = stats.get('MATERIALS', {})
         st.markdown(f"""
         <div class="data-card">
-            <h3>📦 Materials <span class="internal-badge">ERP</span></h3>
+            <h3>Materials <span class="internal-badge">ERP</span></h3>
             <div class="data-count">{m.get('count', 0):,}</div>
             <p>{m.get('description', '')}</p>
         </div>
@@ -379,7 +379,7 @@ def main():
         p = stats.get('PURCHASE_ORDERS', {})
         st.markdown(f"""
         <div class="data-card">
-            <h3>📋 Purchase Orders <span class="internal-badge">ERP</span></h3>
+            <h3>Purchase Orders <span class="internal-badge">ERP</span></h3>
             <div class="data-count">{p.get('count', 0):,}</div>
             <p>{p.get('description', '')}</p>
         </div>
@@ -389,7 +389,7 @@ def main():
         b = stats.get('BILL_OF_MATERIALS', {})
         st.markdown(f"""
         <div class="data-card">
-            <h3>🔩 Bill of Materials <span class="internal-badge">ERP</span></h3>
+            <h3>Bill of Materials <span class="internal-badge">ERP</span></h3>
             <div class="data-count">{b.get('count', 0):,}</div>
             <p>{b.get('description', '')}</p>
         </div>
@@ -446,7 +446,7 @@ def main():
             <div style="background: #7f1d1d; border: 2px solid #dc2626; border-radius: 8px; padding: 1rem;">
                 <div style="color: #dc2626; font-weight: 700; font-size: 1.2rem;">TIER 2+</div>
                 <div style="color: #fca5a5; font-size: 0.9rem;">Hidden Suppliers</div>
-                <div style="color: #fca5a5; font-size: 0.8rem;">❓ Unknown until now</div>
+                <div style="color: #fca5a5; font-size: 0.8rem;">Unknown until now</div>
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -469,7 +469,7 @@ def main():
         t = stats.get('TRADE_DATA', {})
         st.markdown(f"""
         <div class="data-card">
-            <h3>🚢 Trade Records <span class="external-badge">Trade Intel</span></h3>
+            <h3>Trade Records <span class="external-badge">Trade Intel</span></h3>
             <div class="data-count">{t.get('count', 0):,}</div>
             <p>{t.get('description', '')} — Bills of lading showing who ships to whom</p>
         </div>
@@ -485,7 +485,7 @@ def main():
         r = stats.get('REGIONS', {})
         st.markdown(f"""
         <div class="data-card">
-            <h3>🌍 Regional Risk Data <span class="external-badge">Enrichment</span></h3>
+            <h3>Regional Risk Data <span class="external-badge">Enrichment</span></h3>
             <div class="data-count">{r.get('count', 0):,}</div>
             <p>Geographic and geopolitical risk factors by region</p>
         </div>
@@ -495,8 +495,8 @@ def main():
         if geo_dist is not None and not geo_dist.empty:
             st.markdown("**Vendor Distribution by Region:**")
             for _, row in geo_dist.head(5).iterrows():
-                risk_icon = "🔴" if row.get('REGION_RISK', 0) > 0.5 else "🟡" if row.get('REGION_RISK', 0) > 0.25 else "🟢"
-                st.markdown(f"- {risk_icon} **{row['COUNTRY_CODE']}** ({row.get('REGION_NAME', 'Unknown')}): {row['VENDOR_COUNT']} vendors")
+                risk_label = "High" if row.get('REGION_RISK', 0) > 0.5 else "Medium" if row.get('REGION_RISK', 0) > 0.25 else "Low"
+                st.markdown(f"- **{row['COUNTRY_CODE']}** ({row.get('REGION_NAME', 'Unknown')}): {row['VENDOR_COUNT']} vendors [{risk_label} risk]")
     
     st.divider()
     
@@ -516,7 +516,7 @@ def main():
         pl = stats.get('PREDICTED_LINKS', {})
         st.markdown(f"""
         <div class="data-card" style="border-color: #10b981;">
-            <h3>🔗 Predicted Links <span style="background: #166534; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;">GNN OUTPUT</span></h3>
+            <h3>Predicted Links <span style="background: #166534; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;">GNN OUTPUT</span></h3>
             <div class="data-count" style="color: #10b981;">{pl.get('count', 0):,}</div>
             <p>{pl.get('description', '')} — Hidden Tier-2+ relationships that the GNN discovered by analyzing trade patterns</p>
         </div>
@@ -526,7 +526,7 @@ def main():
         rs = stats.get('RISK_SCORES', {})
         st.markdown(f"""
         <div class="data-card" style="border-color: #10b981;">
-            <h3>⚠️ Risk Scores <span style="background: #166534; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;">GNN OUTPUT</span></h3>
+            <h3>Risk Scores <span style="background: #166534; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;">GNN OUTPUT</span></h3>
             <div class="data-count" style="color: #10b981;">{rs.get('count', 0):,}</div>
             <p>{rs.get('description', '')} — Every node in the graph now has a propagated risk score based on its position in the network</p>
         </div>

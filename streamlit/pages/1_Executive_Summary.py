@@ -20,7 +20,7 @@ from utils.sidebar import render_sidebar, render_star_callout
 
 st.set_page_config(
     page_title="Executive Summary",
-    page_icon="📊",
+    page_icon=None,
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -506,7 +506,7 @@ def main():
     # HEADER
     # ============================================
     st.markdown("""
-    <div class="page-header">📊 Executive Summary</div>
+    <div class="page-header">Executive Summary</div>
     <div class="page-subheader">Portfolio-level supply chain risk intelligence</div>
     """, unsafe_allow_html=True)
     
@@ -546,7 +546,7 @@ def main():
             <div class="kpi-card">
                 <div class="kpi-value critical">{critical_count}</div>
                 <div class="kpi-label">Critical Risks</div>
-                <div class="kpi-trend trend-up">⚠️ Requires Action</div>
+                <div class="kpi-trend trend-up">Requires Action</div>
             </div>
             """, unsafe_allow_html=True)
         
@@ -628,7 +628,7 @@ def main():
             
             st.markdown(f"""
             <div class="insight-card">
-                <h4>🎯 Average Portfolio Risk</h4>
+                <h4>Average Portfolio Risk</h4>
                 <p>Your supply chain has an average risk score of <strong>{avg_risk:.0%}</strong>. 
                 {"This is elevated and requires attention." if avg_risk > 0.5 else "This is within acceptable range."}</p>
             </div>
@@ -637,7 +637,7 @@ def main():
             if critical > 0:
                 st.markdown(f"""
                 <div class="insight-card">
-                    <h4>⚠️ Critical Attention Needed</h4>
+                    <h4>Critical Attention Needed</h4>
                     <p><strong>{critical} supplier(s)</strong> are in critical risk status. 
                     Immediate review and mitigation planning recommended.</p>
                 </div>
@@ -648,7 +648,7 @@ def main():
             if at_risk > 0:
                 st.markdown(f"""
                 <div class="insight-card">
-                    <h4>🔗 Concentration Alert</h4>
+                    <h4>Concentration Alert</h4>
                     <p><strong>{at_risk} vendors</strong> depend on hidden Tier-2 suppliers 
                     that could create supply disruptions.</p>
                 </div>
@@ -669,7 +669,7 @@ def main():
         if not regional_data.empty:
             high_risk_regions = regional_data[regional_data['AVG_RISK'].fillna(0) >= 0.5]
             if not high_risk_regions.empty:
-                st.caption(f"⚠️ {len(high_risk_regions)} region(s) above 50% risk threshold")
+                st.caption(f"{len(high_risk_regions)} region(s) above 50% risk threshold")
     
     with col2:
         st.markdown("### Top Concentration Risks")
@@ -698,7 +698,7 @@ def main():
     # ============================================
     st.markdown("""
     <div class="value-highlight">
-        <h3>📈 Value Delivered by Supply Chain Risk Intelligence</h3>
+        <h3>Value Delivered by Supply Chain Risk Intelligence</h3>
         <p>
             <strong>Before:</strong> Weeks of manual research to trace supplier dependencies. 
             Reactive response to disruptions. Hidden concentration risks causing unexpected shortages.
@@ -719,7 +719,7 @@ def main():
     st.markdown('<div class="section-header">ROI Calculator</div>', unsafe_allow_html=True)
     st.markdown("Estimate the value of proactive supply chain risk management")
     
-    with st.expander("💰 Calculate Your Potential Savings", expanded=False):
+    with st.expander("Calculate Your Potential Savings", expanded=False):
         calc_col1, calc_col2 = st.columns(2)
         
         with calc_col1:
@@ -829,15 +829,15 @@ def main():
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.page_link("pages/4_Tier2_Analysis.py", label="🔎 Deep Dive: Tier-2 Analysis", icon="🔎")
+        st.page_link("pages/4_Tier2_Analysis.py", label="Deep Dive: Tier-2 Analysis")
         st.caption("Examine concentration points and predicted links")
     
     with col2:
-        st.page_link("pages/5_Scenario_Simulator.py", label="🔮 What-If: Scenario Simulator", icon="🔮")
+        st.page_link("pages/5_Scenario_Simulator.py", label="What-If: Scenario Simulator")
         st.caption("Simulate disruptions and see cascading impact")
     
     with col3:
-        st.page_link("pages/7_Risk_Mitigation.py", label="⚡ Take Action: Risk Mitigation", icon="⚡")
+        st.page_link("pages/7_Risk_Mitigation.py", label="Take Action: Risk Mitigation")
         st.caption("Prioritized actions and AI guidance")
 
 

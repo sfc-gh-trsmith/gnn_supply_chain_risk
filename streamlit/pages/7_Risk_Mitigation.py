@@ -18,7 +18,7 @@ from utils.sidebar import render_sidebar, render_star_callout
 
 st.set_page_config(
     page_title="Risk Mitigation",
-    page_icon="⚡",
+    page_icon=None,
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -611,7 +611,7 @@ def main():
     # HEADER
     # ============================================
     st.markdown("""
-    <div class="page-header">⚡ Risk Mitigation</div>
+    <div class="page-header">Risk Mitigation</div>
     <div class="page-subheader">Prioritization matrix, action items, and analysis tools</div>
     """, unsafe_allow_html=True)
     
@@ -661,7 +661,7 @@ def main():
             if ai_explanation:
                 st.markdown(f"""
                 <div style="background: rgba(59, 130, 246, 0.08); border-left: 3px solid #3b82f6; padding: 0.75rem 1rem; margin-top: 0.5rem; border-radius: 0 8px 8px 0;">
-                    <div style="color: #60a5fa; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">🤖 AI Guidance</div>
+                    <div style="color: #60a5fa; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">AI Guidance</div>
                     <p style="color: #e2e8f0; line-height: 1.6; white-space: pre-wrap; margin: 0; font-size: 0.9rem;">{ai_explanation}</p>
                 </div>
                 """, unsafe_allow_html=True)
@@ -761,7 +761,7 @@ def main():
                 st.rerun()
         
         st.markdown("---")
-        if st.button("🗑️ Clear Chat"):
+        if st.button("Clear Chat"):
             st.session_state.messages = []
             st.rerun()
     
@@ -778,7 +778,7 @@ def main():
         if high_risk is not None:
             csv = high_risk.to_csv(index=False)
             st.download_button(
-                "📥 Download Risk Report (CSV)",
+                "Download Risk Report (CSV)",
                 csv,
                 "risk_report.csv",
                 "text/csv",
@@ -791,14 +791,14 @@ def main():
             if not bottlenecks.empty:
                 csv = bottlenecks.to_csv(index=False)
                 st.download_button(
-                    "📥 Download Bottleneck Report",
+                    "Download Bottleneck Report",
                     csv,
                     "bottleneck_report.csv",
                     "text/csv",
                     use_container_width=True
                 )
         except:
-            st.button("📥 Download Bottleneck Report", disabled=True, use_container_width=True)
+            st.button("Download Bottleneck Report", disabled=True, use_container_width=True)
     
     with col3:
         try:
@@ -806,14 +806,14 @@ def main():
             if not links.empty:
                 csv = links.to_csv(index=False)
                 st.download_button(
-                    "📥 Download Predictions",
+                    "Download Predictions",
                     csv,
                     "predicted_links.csv",
                     "text/csv",
                     use_container_width=True
                 )
         except:
-            st.button("📥 Download Predictions", disabled=True, use_container_width=True)
+            st.button("Download Predictions", disabled=True, use_container_width=True)
 
 
 if __name__ == "__main__":

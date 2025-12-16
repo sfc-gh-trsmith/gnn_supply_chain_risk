@@ -21,7 +21,7 @@ from utils.sidebar import render_sidebar, render_star_callout
 # Page configuration
 st.set_page_config(
     page_title="Supply Chain Risk Intelligence",
-    page_icon="🔗",
+    page_icon=None,
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -1242,7 +1242,7 @@ def main():
                     border: 1px solid #3b82f6; border-radius: 12px; padding: 1.5rem; 
                     margin: 1rem 0; text-align: center;">
             <div style="font-size: 1.2rem; color: #f8fafc; margin-bottom: 0.5rem;">
-                🚀 <strong>Run the GNN Analysis</strong>
+                <strong>Run the GNN Analysis</strong>
             </div>
             <div style="color: #94a3b8; margin-bottom: 1rem;">
                 Execute the notebook to generate risk scores, discover hidden dependencies, and identify bottlenecks.
@@ -1291,7 +1291,7 @@ def main():
         st.metric("Total PO Spend", f"${total_spend/1e6:.1f}M" if total_spend > 1e6 else f"${total_spend:,.0f}", help="Purchase order value")
     
     # Subsection 1: Supplier Portfolio
-    with st.expander("📊 Supplier Portfolio Analysis", expanded=True):
+    with st.expander("Supplier Portfolio Analysis", expanded=True):
         st.markdown("""
         <p style="color: #94a3b8; margin-bottom: 1rem;">
             Your ERP shows supplier distribution by geography, financial health, and spend concentration.
@@ -1320,7 +1320,7 @@ def main():
             st.caption(f"Top 10 suppliers account for {concentration_pct:.1f}% of total spend")
     
     # Subsection 2: Materials & Sourcing
-    with st.expander("📦 Materials & Sourcing Strategy", expanded=True):
+    with st.expander("Materials & Sourcing Strategy", expanded=True):
         st.markdown("""
         <p style="color: #94a3b8; margin-bottom: 1rem;">
             Material portfolio breakdown and sourcing strategy metrics from purchase order data.
@@ -1344,7 +1344,7 @@ def main():
         st.caption("Amber dots = single-sourced materials (higher risk). Green dots = multi-sourced.")
     
     # Subsection 3: BOM Structure
-    with st.expander("🔧 Bill of Materials Structure", expanded=False):
+    with st.expander("Bill of Materials Structure", expanded=False):
         st.markdown("""
         <p style="color: #94a3b8; margin-bottom: 1rem;">
             Product structure hierarchy and component reuse patterns.
@@ -1373,7 +1373,7 @@ def main():
             render_component_reuse_chart(reuse_data, height=250)
     
     # Subsection 4: Trade Intelligence Preview
-    with st.expander("🌐 External Trade Intelligence", expanded=False):
+    with st.expander("External Trade Intelligence", expanded=False):
         st.markdown("""
         <p style="color: #94a3b8; margin-bottom: 1rem;">
             Shipping and trade data reveals external entities supplying your vendors — potential hidden Tier-2 suppliers.
@@ -1479,7 +1479,7 @@ def main():
         # Show the concentration risk callout
         st.markdown(f"""
         <div class="discovery-callout">
-            <h2>⚠️ Concentration Alert</h2>
+            <h2>Concentration Alert</h2>
             <p>
                 <span class="highlight">{bottleneck['NODE_ID']}</span> — Tier-2 supplier with 
                 <span class="highlight">{bottleneck['DEPENDENT_COUNT']}</span> dependent Tier-1 vendors
@@ -1517,7 +1517,7 @@ def main():
     with col1:
         st.markdown("""
         <div class="narrative-card">
-            <h3>🎯 Risk Scoring</h3>
+            <h3>Risk Scoring</h3>
             <p>
                 Propagated risk scores that account for both direct supplier risk and 
                 indirect exposure through Tier-2+ dependencies.
@@ -1528,7 +1528,7 @@ def main():
     with col2:
         st.markdown("""
         <div class="narrative-card">
-            <h3>🔍 Concentration Analysis</h3>
+            <h3>Concentration Analysis</h3>
             <p>
                 Identify suppliers where multiple Tier-1 vendors converge on shared 
                 Tier-2+ sources, creating hidden concentration risk.
@@ -1539,7 +1539,7 @@ def main():
     with col3:
         st.markdown("""
         <div class="narrative-card">
-            <h3>⚡ Mitigation Planning</h3>
+            <h3>Mitigation Planning</h3>
             <p>
                 Prioritized action items based on risk impact and probability, with 
                 AI-assisted analysis for deeper investigation.
@@ -1559,19 +1559,19 @@ def main():
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.page_link("pages/1_Executive_Summary.py", label="📊 Executive Summary", icon="📊")
+        st.page_link("pages/1_Executive_Summary.py", label="Executive Summary")
         st.caption("Portfolio health and KPIs")
     
     with col2:
-        st.page_link("pages/3_Supply_Network.py", label="🕸️ Supply Network", icon="🕸️")
+        st.page_link("pages/3_Supply_Network.py", label="Supply Network")
         st.caption("Multi-tier relationship graph")
     
     with col3:
-        st.page_link("pages/4_Tier2_Analysis.py", label="🔎 Tier-2 Analysis", icon="🔎")
+        st.page_link("pages/4_Tier2_Analysis.py", label="Tier-2 Analysis")
         st.caption("Concentration points and inferred links")
     
     with col4:
-        st.page_link("pages/7_Risk_Mitigation.py", label="⚡ Risk Mitigation", icon="⚡")
+        st.page_link("pages/7_Risk_Mitigation.py", label="Risk Mitigation")
         st.caption("Prioritization and action planning")
     
     # Sidebar with navigation

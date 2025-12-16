@@ -11,7 +11,7 @@ import streamlit as st
 STAR_CALLOUTS = {
     "home": {
         "phase": "SITUATION",
-        "icon": "🎯",
+        "icon": "",
         "color": "#dc2626",
         "title": "The Hidden Risk",
         "content": """Your ERP shows a diversified supply base with multiple suppliers across different 
@@ -21,7 +21,7 @@ risk that traditional analytics miss entirely."""
     },
     "exploratory": {
         "phase": "TASK",
-        "icon": "🔍",
+        "icon": "",
         "color": "#f59e0b",
         "title": "Understanding the Data Gap",
         "content": """The task is to extend visibility beyond Tier-1. We fuse internal ERP data 
@@ -31,7 +31,7 @@ foundation for graph-based risk analysis."""
     },
     "network": {
         "phase": "TASK",
-        "icon": "🕸️",
+        "icon": "",
         "color": "#f59e0b",
         "title": "Building the Knowledge Graph",
         "content": """By modeling the supply chain as a graph, we transform isolated data rows into 
@@ -41,7 +41,7 @@ that would be invisible in traditional tabular analysis."""
     },
     "tier2": {
         "phase": "ACTION",
-        "icon": "⚡",
+        "icon": "",
         "color": "#29B5E8",  # Snowflake Blue
         "title": "AI-Powered Discovery",
         "content": """The Graph Neural Network analyzes trade patterns to predict likely Tier-2+ 
@@ -51,7 +51,7 @@ by trade evidence — transforming guesswork into data-driven insight."""
     },
     "mitigation": {
         "phase": "ACTION",
-        "icon": "🎬",
+        "icon": "",
         "color": "#29B5E8",  # Snowflake Blue
         "title": "Prioritized Response",
         "content": """With hidden risks surfaced, the system prioritizes actions by impact and probability. 
@@ -60,7 +60,7 @@ transforms supply chain management from reactive firefighting to proactive resil
     },
     "executive": {
         "phase": "RESULT",
-        "icon": "📊",
+        "icon": "",
         "color": "#10b981",
         "title": "Measurable Value",
         "content": """The result: full visibility into your extended supply network, quantified risk 
@@ -69,7 +69,7 @@ now happens in minutes. Concentration risks are identified before they cause dis
     },
     "simulator": {
         "phase": "ACTION",
-        "icon": "🔮",
+        "icon": "",
         "color": "#29B5E8",  # Snowflake Blue
         "title": "What-If Analysis",
         "content": """Simulate disruption scenarios to understand cascading impacts before they happen. 
@@ -78,7 +78,7 @@ This predictive capability enables strategic planning and contingency preparatio
     },
     "command": {
         "phase": "ACTION",
-        "icon": "📡",
+        "icon": "",
         "color": "#29B5E8",  # Snowflake Blue
         "title": "Operational Monitoring",
         "content": """Track active alerts, monitor watchlisted suppliers, and manage mitigation actions 
@@ -87,7 +87,7 @@ when conditions change."""
     },
     "about": {
         "phase": "REFERENCE",
-        "icon": "📚",
+        "icon": "",
         "color": "#8b5cf6",
         "title": "Technical Foundation",
         "content": """This solution runs entirely within Snowflake's secure governance boundary. 
@@ -152,7 +152,6 @@ def render_star_callout(page_key: str):
                 font-weight: 700;
                 letter-spacing: 0.05em;
             ">{phase}</span>
-            <span style="font-size: 1.5rem;">{icon}</span>
             <span style="color: #f8fafc; font-weight: 700; font-size: 1.1rem;">{title}</span>
         </div>
         <p style="color: #cbd5e1; line-height: 1.6; margin: 0; font-size: 0.95rem;">
@@ -167,13 +166,13 @@ def render_star_progress():
     if not get_demo_mode():
         return
     
-    st.markdown("#### 📍 Demo Progress")
+    st.markdown("#### Demo Progress")
     st.markdown("""
     <div style="font-size: 0.85rem; line-height: 1.8; color: #94a3b8;">
-        <div><span style="color: #dc2626;">●</span> <strong>SITUATION</strong> — The Problem</div>
-        <div><span style="color: #f59e0b;">●</span> <strong>TASK</strong> — What We Solve</div>
-        <div><span style="color: #29B5E8;">●</span> <strong>ACTION</strong> — How We Do It</div>
-        <div><span style="color: #10b981;">●</span> <strong>RESULT</strong> — Value Delivered</div>
+        <div><span style="color: #dc2626;">S</span> <strong>SITUATION</strong> — The Problem</div>
+        <div><span style="color: #f59e0b;">T</span> <strong>TASK</strong> — What We Solve</div>
+        <div><span style="color: #29B5E8;">A</span> <strong>ACTION</strong> — How We Do It</div>
+        <div><span style="color: #10b981;">R</span> <strong>RESULT</strong> — Value Delivered</div>
     </div>
     """, unsafe_allow_html=True)
     st.markdown("---")
@@ -200,25 +199,25 @@ def render_sidebar():
     Should be called at the end of each page's main() function.
     """
     with st.sidebar:
-        st.markdown("### 🔗 Supply Chain Risk")
+        st.markdown("### Supply Chain Risk")
         st.markdown("---")
         
         # STAR progress indicator (when demo mode enabled) - show at top if active
         render_star_progress()
         
         # Navigation
-        st.page_link("streamlit_app.py", label="Home", icon="🏠")
-        st.page_link("pages/1_Executive_Summary.py", label="Executive Summary", icon="📊")
-        st.page_link("pages/2_Exploratory_Analysis.py", label="Exploratory Analysis", icon="🔍")
-        st.page_link("pages/3_Supply_Network.py", label="Supply Network", icon="🕸️")
-        st.page_link("pages/4_Tier2_Analysis.py", label="Tier-2 Analysis", icon="🔎")
-        st.page_link("pages/5_Scenario_Simulator.py", label="Scenario Simulator", icon="🔮")
-        st.page_link("pages/6_Command_Center.py", label="Command Center", icon="📡")
-        st.page_link("pages/7_Risk_Mitigation.py", label="Risk Mitigation", icon="⚡")
-        st.page_link("pages/8_About.py", label="About", icon="ℹ️")
+        st.page_link("streamlit_app.py", label="Home")
+        st.page_link("pages/1_Executive_Summary.py", label="Executive Summary")
+        st.page_link("pages/2_Exploratory_Analysis.py", label="Exploratory Analysis")
+        st.page_link("pages/3_Supply_Network.py", label="Supply Network")
+        st.page_link("pages/4_Tier2_Analysis.py", label="Tier-2 Analysis")
+        st.page_link("pages/5_Scenario_Simulator.py", label="Scenario Simulator")
+        st.page_link("pages/6_Command_Center.py", label="Command Center")
+        st.page_link("pages/7_Risk_Mitigation.py", label="Risk Mitigation")
+        st.page_link("pages/8_About.py", label="About")
         st.markdown("---")
         
-        if st.button("🔄 Refresh Data"):
+        if st.button("Refresh Data"):
             st.cache_data.clear()
             st.rerun()
         
@@ -226,7 +225,7 @@ def render_sidebar():
         
         # Guided Demo Mode toggle - at bottom of sidebar
         demo_mode = st.toggle(
-            "🎯 Guided Demo Mode",
+            "Guided Demo Mode",
             value=get_demo_mode(),
             help="Enable contextual STAR method annotations throughout the demo"
         )

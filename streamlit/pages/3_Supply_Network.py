@@ -49,7 +49,7 @@ COUNTRY_COORDS = {
 
 st.set_page_config(
     page_title="Supply Network",
-    page_icon="🕸️",
+    page_icon=None,
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -659,7 +659,7 @@ def main():
     # HEADER
     # ============================================
     st.markdown("""
-    <div class="page-header">🕸️ Supply Network</div>
+    <div class="page-header">Supply Network</div>
     <div class="page-subheader">Multi-tier supplier relationship graph</div>
     """, unsafe_allow_html=True)
     

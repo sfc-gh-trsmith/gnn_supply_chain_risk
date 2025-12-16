@@ -16,10 +16,16 @@ from snowflake.snowpark.context import get_active_session
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.data_loader import run_queries_parallel
 from utils.sidebar import render_sidebar, render_star_callout
+from utils.risk_narratives import (
+    render_risk_intelligence_card,
+    render_compact_risk_card,
+    get_region_for_bottleneck,
+    get_region_narrative,
+)
 
 st.set_page_config(
     page_title="Tier-2 Analysis",
-    page_icon="🔍",
+    page_icon=None,
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -564,7 +570,7 @@ def main():
     # HEADER
     # ============================================
     st.markdown("""
-    <div class="page-header">🔍 Tier-2 Analysis</div>
+    <div class="page-header">Tier-2 Analysis</div>
     <div class="page-subheader">Inferred supplier dependencies and concentration risks</div>
     """, unsafe_allow_html=True)
     
@@ -623,7 +629,7 @@ def main():
         
         st.markdown(f"""
         <div class="concentration-alert">
-            <h3>⚠️ Highest Concentration Risk</h3>
+            <h3>Highest Concentration Risk</h3>
             <p style="color: #e2e8f0;">
                 <span class="value">{top_bottleneck['NODE_ID']}</span> — Tier-2 supplier with 
                 <span class="value">{top_bottleneck['DEPENDENT_COUNT']}</span> dependent Tier-1 vendors
@@ -648,13 +654,22 @@ def main():
             st.markdown(f"""
             <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid #3b82f6; border-radius: 8px; padding: 1rem; margin: 1rem 0;">
                 <div style="color: #3b82f6; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 0.5rem;">
-                    🤖 AI Risk Analysis
+                    AI Risk Analysis
                 </div>
                 <p style="color: #e2e8f0; line-height: 1.6; margin: 0;">
                     {ai_analysis}
                 </p>
             </div>
             """, unsafe_allow_html=True)
+        
+        # Show Regional Risk Context if this bottleneck has a critical region association
+        region_code = get_region_for_bottleneck(top_bottleneck['NODE_ID'])
+        if region_code:
+            st.markdown("#### Regional Risk Context")
+            st.markdown(
+                render_risk_intelligence_card(region_code, show_bottleneck=False),
+                unsafe_allow_html=True
+            )
         
         # Load details for the top bottleneck
         dependents = load_bottleneck_dependents(session, top_bottleneck['NODE_ID'])
@@ -802,9 +817,9 @@ def main():
                     <span class="impact-badge impact-{impact_class}">{impact_label} IMPACT</span>
                 </div>
                 <div class="bottleneck-stats">
-                    <span>📊 Impact: <strong>{impact:.0%}</strong></span>
-                    <span>🏭 Dependents: <strong>{row['DEPENDENT_COUNT']}</strong></span>
-                    <span>📋 Status: <strong>{row.get('MITIGATION_STATUS', 'UNMITIGATED')}</strong></span>
+                    <span>Impact: <strong>{impact:.0%}</strong></span>
+                    <span>Dependents: <strong>{row['DEPENDENT_COUNT']}</strong></span>
+                    <span>Status: <strong>{row.get('MITIGATION_STATUS', 'UNMITIGATED')}</strong></span>
                 </div>
                 <div class="bottleneck-description">
                     {row.get('DESCRIPTION', 'Hidden supply chain convergence point requiring attention.')}
@@ -822,10 +837,18 @@ def main():
             if bottleneck_analysis:
                 st.markdown(f"""
                 <div style="background: rgba(59, 130, 246, 0.08); border-left: 3px solid #3b82f6; padding: 0.75rem 1rem; margin-top: 0.5rem; border-radius: 0 8px 8px 0;">
-                    <div style="color: #60a5fa; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">🤖 AI Analysis</div>
+                    <div style="color: #60a5fa; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">AI Analysis</div>
                     <p style="color: #e2e8f0; line-height: 1.5; margin: 0; font-size: 0.9rem;">{bottleneck_analysis}</p>
                 </div>
                 """, unsafe_allow_html=True)
+            
+            # Show compact regional context for bottlenecks with critical region associations
+            bottleneck_region = get_region_for_bottleneck(row['NODE_ID'])
+            if bottleneck_region:
+                st.markdown(
+                    render_compact_risk_card(bottleneck_region),
+                    unsafe_allow_html=True
+                )
     else:
         st.info("No bottlenecks identified. Run the GNN notebook to analyze your supply chain.")
     
@@ -861,7 +884,7 @@ def main():
             st.markdown(f"""
             <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; border-radius: 8px; padding: 1rem; margin: 1rem 0;">
                 <div style="color: #10b981; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 0.5rem;">
-                    🤖 AI Summary
+                    AI Summary
                 </div>
                 <p style="color: #e2e8f0; line-height: 1.6; margin: 0;">
                     {links_summary}
@@ -888,7 +911,7 @@ def main():
         # Download option
         csv = predicted_links.to_csv(index=False)
         st.download_button(
-            "📥 Download Predicted Links CSV",
+            "Download Predicted Links CSV",
             csv,
             "predicted_links.csv",
             "text/csv"

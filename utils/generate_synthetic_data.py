@@ -78,7 +78,15 @@ REGION_RISKS = {
     # - Labor disputes in mining sector (recent strikes)
     # - Single-source dependency for battery-grade lithium
     "AUS": {"base": 0.80, "geopolitical": 0.85, "natural": 0.85, "infrastructure": 0.45},
-    "COD": {"base": 0.7, "geopolitical": 0.8, "natural": 0.3, "infrastructure": 0.3},  # High risk
+    # DR Congo: CRITICAL RISK due to:
+    # - Armed conflict: M23 rebels control mining regions in eastern DRC
+    # - ESG/Compliance risk: Artisanal mining practices, child labor concerns
+    # - Political instability: Weak governance, corruption, regulatory uncertainty
+    # - Infrastructure challenges: Poor roads, limited power grid, logistics bottlenecks
+    # - Global dependency: DRC holds 70% of world's cobalt reserves - no easy alternatives
+    # - Export controls: Government attempts to control cobalt pricing
+    # - Hidden Tier-2 bottleneck: "Congo Cobalt Mines" has 40% concentration
+    "COD": {"base": 0.7, "geopolitical": 0.8, "natural": 0.3, "infrastructure": 0.3},
 }
 
 # HS Codes for trade data
