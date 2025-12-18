@@ -13,7 +13,7 @@
 #   ./run.sh status            # Check resource status
 #   ./run.sh notebook          # Get notebook URL
 #   ./run.sh streamlit         # Get Streamlit URL
-#   ./run.sh -c prod main      # Use specific connection
+#   ./run.sh -c demo  main     # Use specific connection
 #   ./run.sh --prefix DEV main # Use DEV_ prefixed resources
 ###############################################################################
 
@@ -59,7 +59,7 @@ Options:
 Examples:
   $0 main                  # Run the notebook
   $0 status                # Check resource status
-  $0 -c prod streamlit     # Get Streamlit URL using prod connection
+  $0 -c demo streamlit     # Get Streamlit URL using demo connection
   $0 --prefix DEV status   # Check status of DEV_ prefixed resources
 EOF
     exit 0

@@ -56,9 +56,11 @@ The solution fuses two data streams into a knowledge graph that reveals what you
 
 - **Domains.** Vendors (Tier-1 suppliers), Materials (parts and BOMs), Regions (geographic risk factors), Trade Data (bills of lading linking shippers to consignees).
 
-- **Freshness.** Batch ingestion for ERP data; periodic refresh for trade intelligence. Risk scores update when the GNN notebook executes.
+- **Freshness.** Batch ingestion for ERP data; continuous refresh for trade intelligence via Snowflake Marketplace. Risk scores update when the GNN notebook executes.
 
 - **Trust.** All data stays within Snowflake's governance boundary. Role-based access controls protect sensitive supplier financials and trade patterns.
+
+- **Production-ready enrichment.** See [Snowflake Marketplace: Real-World Data Integration](#snowflake-marketplace-real-world-data-integration) below for specific data providers that power the Tier-2+ inference engine.
 
 | Data Source | Type | Purpose |
 |-------------|------|---------|
@@ -67,6 +69,71 @@ The solution fuses two data streams into a knowledge graph that reveals what you
 | Bill of Materials (ERP) | Internal | Product assembly hierarchy |
 | Trade Data (External) | Enrichment | Hidden Tier-2+ relationship inference |
 | Regional Risk (External) | Enrichment | Geopolitical and disaster risk factors |
+
+---
+
+## Snowflake Marketplace: Real-World Data Integration
+
+Moving from demo to production requires high-quality external data. These **Snowflake Marketplace** providers deliver the trade intelligence and entity data needed to operationalize N-tier visibility—no data pipelines to build, no contracts to negotiate outside your Snowflake account.
+
+![Marketplace Integration](images/marketplace_integration.svg)
+*Snowflake Marketplace providers plug directly into the knowledge graph, enriching internal ERP data with global trade flows and entity relationships.*
+
+### S&P Global Market Intelligence — Panjiva Supply Chain Intelligence
+
+**The gold standard for inferring hidden Tier-2+ relationships.**
+
+[Panjiva Micro](https://www.snowflake.com/datasets/sp-global-market-intelligence-panjiva-supply-chain-intelligence/) | [Panjiva Macro (UN Comtrade)](https://www.snowflake.com/datasets/sp-global-market-intelligence-panjiva-macro-un-comtrade/)
+
+- **What it provides:** Customs-based bill-of-lading shipment records with shipper/consignee entities, HS codes, origin/destination ports, volumes, and values.
+- **How we use it:** Feed shipper→consignee trade flows as edges into the GNN. When your Tier-1 supplier appears as a consignee, Panjiva reveals who shipped to them—your likely Tier-2 suppliers.
+- **Key insight:** If three of your Tier-1 vendors all receive shipments from the same overseas refinery, Panjiva exposes that hidden concentration before a disruption occurs.
+
+### Oxford Economics — TradePrism
+
+**Forward-looking trade forecasts and scenario modeling.**
+
+[TradePrism Full Dataset](https://app.snowflake.com/marketplace/listing/GZ1M7ZCX4H2/oxford-economics-group-tradeprism-full-dataset)
+
+- **What it provides:** Global trade forecasts at HS4 level across ~170 economies, including tariff scenarios, sanction impacts, and trade rerouting projections.
+- **How we use it:** Overlay predictive risk scores with forward-looking exposure. A supplier in a stable region today may face tariff escalation or sanctions risk tomorrow.
+- **Key insight:** Combine historical Panjiva shipment data with TradePrism forecasts to answer: "If sanctions expand to Region X, which of my supply chains are exposed?"
+
+### FactSet — Supply Chain Linkages & Entity Data
+
+**Entity resolution and corporate relationship mapping.**
+
+[FactSet on Snowflake Marketplace](https://app.snowflake.com/marketplace/providers/GZT0Z28ANYN/FactSet)
+
+- **What it provides:** Company fundamentals, estimates, and supply chain linkages with standardized symbology for entity matching across datasets.
+- **How we use it:** Map shipper/consignee names from trade data to actual vendor entities in your ERP. Build supplier/geo exposure roll-ups at the corporate parent level.
+- **Key insight:** Your ERP shows "Acme Electronics (Shenzhen)" as a supplier. FactSet reveals it's a subsidiary of a larger conglomerate with operations across five countries—changing your geographic diversification assumptions.
+
+### Resilinc — EventWatch AI
+
+**Real-time disruption monitoring and supplier risk signals.**
+
+[Resilinc EventWatch AI](https://app.snowflake.com/marketplace/listing/GZSTZO0V7VR/resilinc-eventwatch-ai)
+
+- **What it provides:** AI-powered monitoring of global events (natural disasters, geopolitical incidents, factory fires, labor actions) mapped to supplier locations and impact zones.
+- **How we use it:** Inject real-time risk signals into the propagated risk scores. When EventWatch detects a factory fire at a Tier-2 location, the GNN immediately recalculates downstream impact.
+- **Key insight:** Move from periodic risk assessment to continuous monitoring. Know about disruptions hours after they happen, not weeks later when parts don't arrive.
+
+### Data Integration Architecture
+
+| Marketplace Provider | Graph Node/Edge Type | Integration Point |
+|---------------------|---------------------|-------------------|
+| **Panjiva** | Trade flow edges (shipper→consignee) | GNN link prediction training |
+| **TradePrism** | Region risk attributes | Node feature enrichment |
+| **FactSet** | Entity resolution, corporate hierarchy | Supplier node canonicalization |
+| **Resilinc** | Real-time event signals | Dynamic risk score updates |
+
+### Why Marketplace Data Matters
+
+- **Zero ETL.** Data lives in Snowflake—join to your tables with SQL, no data movement required.
+- **Always current.** Providers update their datasets; you automatically get fresh intelligence.
+- **Governed access.** Marketplace shares respect your Snowflake RBAC; sensitive enrichments stay protected.
+- **Rapid time-to-value.** Skip months of data licensing negotiations and pipeline engineering.
 
 ---
 
@@ -173,7 +240,11 @@ Action items ranked by impact and probability. AI-assisted analysis provides con
 ### Secondary: Explore with Your Data
 
 - Review the data architecture and map to your ERP schema
-- Identify trade data sources for Tier-2+ enrichment (Panjiva, ImportGenius, UN Comtrade)
+- Subscribe to Marketplace data sources for Tier-2+ enrichment:
+  - [S&P Global Panjiva](https://www.snowflake.com/datasets/sp-global-market-intelligence-panjiva-supply-chain-intelligence/) — Trade flow intelligence
+  - [Oxford Economics TradePrism](https://app.snowflake.com/marketplace/listing/GZ1M7ZCX4H2/) — Forward-looking trade forecasts
+  - [FactSet](https://app.snowflake.com/marketplace/providers/GZT0Z28ANYN/FactSet) — Entity resolution and corporate linkages
+  - [Resilinc EventWatch](https://app.snowflake.com/marketplace/listing/GZSTZO0V7VR/) — Real-time disruption monitoring
 - Schedule a working session to design a proof-of-concept with your critical materials
 
 ---
@@ -186,6 +257,7 @@ The following images should be added to the `solution_presentation/images/` dire
 |----------|-------------|
 | `tier_visibility_gap.svg` | Diagram showing visibility ending at Tier-1 with hidden Tier-2/3 suppliers |
 | `data_architecture.svg` | Data flow from ERP + Trade sources to Knowledge Graph |
+| `marketplace_integration.svg` | How Marketplace providers (Panjiva, TradePrism, FactSet, Resilinc) connect to the knowledge graph |
 | `solution_flow.svg` | 5-step pipeline: Ingest → Build → Infer → Propagate → Visualize |
 | `concentration_alert.svg` | Radial graph showing multiple Tier-1 suppliers connected to one Tier-2 bottleneck |
 | `dashboard_home.png` | Screenshot of the Streamlit Home page with key metrics |
