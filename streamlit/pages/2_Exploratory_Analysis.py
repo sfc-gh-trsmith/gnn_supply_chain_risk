@@ -13,7 +13,7 @@ from snowflake.snowpark.context import get_active_session
 
 # Add parent directory to path for utils import (needed for Streamlit in Snowflake)
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.data_loader import run_queries_parallel
+from utils.data_loader import run_queries_parallel, DB_SCHEMA
 from utils.sidebar import render_sidebar, render_star_callout
 
 st.set_page_config(
@@ -155,7 +155,7 @@ def load_data_statistics(_session):
     }
     
     # Build queries for parallel execution (8 queries in parallel instead of sequential)
-    queries = {table: f"SELECT COUNT(*) as CNT FROM {table}" for table in table_descriptions}
+    queries = {table: f"SELECT COUNT(*) as CNT FROM {DB_SCHEMA}.{table}" for table in table_descriptions}
     
     # Execute all COUNT queries in parallel
     results = run_queries_parallel(_session, queries, max_workers=4)
@@ -176,15 +176,15 @@ def load_data_statistics(_session):
 def load_geographic_distribution(_session):
     """Load vendor distribution by country."""
     try:
-        result = _session.sql("""
+        result = _session.sql(f"""
             SELECT 
                 v.COUNTRY_CODE,
                 r.REGION_NAME,
                 COUNT(*) as VENDOR_COUNT,
                 AVG(v.FINANCIAL_HEALTH_SCORE) as AVG_HEALTH,
                 r.BASE_RISK_SCORE as REGION_RISK
-            FROM VENDORS v
-            LEFT JOIN REGIONS r ON v.COUNTRY_CODE = r.REGION_CODE
+            FROM {DB_SCHEMA}.VENDORS v
+            LEFT JOIN {DB_SCHEMA}.REGIONS r ON v.COUNTRY_CODE = r.REGION_CODE
             GROUP BY v.COUNTRY_CODE, r.REGION_NAME, r.BASE_RISK_SCORE
             ORDER BY VENDOR_COUNT DESC
         """).to_pandas()
@@ -197,14 +197,14 @@ def load_geographic_distribution(_session):
 def load_trade_flow_summary(_session):
     """Load summary of trade flows from external data."""
     try:
-        result = _session.sql("""
+        result = _session.sql(f"""
             SELECT 
                 SHIPPER_COUNTRY,
                 COUNT(DISTINCT SHIPPER_NAME) as SHIPPER_COUNT,
                 COUNT(*) as SHIPMENT_COUNT,
                 SUM(WEIGHT_KG) as TOTAL_WEIGHT,
                 COUNT(DISTINCT CONSIGNEE_NAME) as CONSIGNEE_COUNT
-            FROM TRADE_DATA
+            FROM {DB_SCHEMA}.TRADE_DATA
             GROUP BY SHIPPER_COUNTRY
             ORDER BY SHIPMENT_COUNT DESC
         """).to_pandas()

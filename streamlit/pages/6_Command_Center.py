@@ -15,7 +15,7 @@ from snowflake.snowpark.context import get_active_session
 
 # Add parent directory to path for utils import (needed for Streamlit in Snowflake)
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.data_loader import run_queries_parallel
+from utils.data_loader import run_queries_parallel, DB_SCHEMA
 from utils.sidebar import render_sidebar, render_star_callout
 
 st.set_page_config(
@@ -234,7 +234,7 @@ def load_active_alerts(_session):
     
     # Define all queries for parallel execution
     queries = {
-        'critical_suppliers': """
+        'critical_suppliers': f"""
             SELECT 
                 v.VENDOR_ID,
                 v.NAME,
@@ -242,13 +242,13 @@ def load_active_alerts(_session):
                 rs.RISK_SCORE,
                 rs.RISK_CATEGORY,
                 rs.UPDATED_AT
-            FROM RISK_SCORES rs
-            JOIN VENDORS v ON rs.NODE_ID = v.VENDOR_ID
+            FROM {DB_SCHEMA}.RISK_SCORES rs
+            JOIN {DB_SCHEMA}.VENDORS v ON rs.NODE_ID = v.VENDOR_ID
             WHERE rs.RISK_CATEGORY = 'CRITICAL'
             ORDER BY rs.RISK_SCORE DESC
             LIMIT 10
         """,
-        'high_risk_suppliers': """
+        'high_risk_suppliers': f"""
             SELECT 
                 v.VENDOR_ID,
                 v.NAME,
@@ -256,13 +256,13 @@ def load_active_alerts(_session):
                 rs.RISK_SCORE,
                 rs.RISK_CATEGORY,
                 rs.UPDATED_AT
-            FROM RISK_SCORES rs
-            JOIN VENDORS v ON rs.NODE_ID = v.VENDOR_ID
+            FROM {DB_SCHEMA}.RISK_SCORES rs
+            JOIN {DB_SCHEMA}.VENDORS v ON rs.NODE_ID = v.VENDOR_ID
             WHERE rs.RISK_CATEGORY = 'HIGH'
             ORDER BY rs.RISK_SCORE DESC
             LIMIT 5
         """,
-        'bottlenecks': """
+        'bottlenecks': f"""
             SELECT 
                 NODE_ID,
                 DEPENDENT_COUNT,
@@ -270,7 +270,7 @@ def load_active_alerts(_session):
                 DESCRIPTION,
                 MITIGATION_STATUS,
                 IDENTIFIED_AT
-            FROM BOTTLENECKS
+            FROM {DB_SCHEMA}.BOTTLENECKS
             WHERE IMPACT_SCORE >= 0.5
             ORDER BY IMPACT_SCORE DESC
             LIMIT 5
@@ -338,10 +338,10 @@ def load_active_alerts(_session):
 def load_alert_summary(_session):
     """Load summary counts for alert categories."""
     queries = {
-        'critical_count': "SELECT COUNT(*) as CNT FROM RISK_SCORES WHERE RISK_CATEGORY = 'CRITICAL'",
-        'high_count': "SELECT COUNT(*) as CNT FROM RISK_SCORES WHERE RISK_CATEGORY = 'HIGH'",
-        'medium_count': "SELECT COUNT(*) as CNT FROM RISK_SCORES WHERE RISK_CATEGORY = 'MEDIUM'",
-        'bottleneck_count': "SELECT COUNT(*) as CNT FROM BOTTLENECKS WHERE IMPACT_SCORE >= 0.5"
+        'critical_count': f"SELECT COUNT(*) as CNT FROM {DB_SCHEMA}.RISK_SCORES WHERE RISK_CATEGORY = 'CRITICAL'",
+        'high_count': f"SELECT COUNT(*) as CNT FROM {DB_SCHEMA}.RISK_SCORES WHERE RISK_CATEGORY = 'HIGH'",
+        'medium_count': f"SELECT COUNT(*) as CNT FROM {DB_SCHEMA}.RISK_SCORES WHERE RISK_CATEGORY = 'MEDIUM'",
+        'bottleneck_count': f"SELECT COUNT(*) as CNT FROM {DB_SCHEMA}.BOTTLENECKS WHERE IMPACT_SCORE >= 0.5"
     }
     
     results = run_queries_parallel(_session, queries, max_workers=4)
@@ -361,7 +361,7 @@ def load_alert_summary(_session):
 def load_watchlist_suppliers(_session):
     """Load suppliers for watchlist - those with elevated risk."""
     try:
-        result = _session.sql("""
+        result = _session.sql(f"""
             SELECT 
                 v.VENDOR_ID,
                 v.NAME,
@@ -370,8 +370,8 @@ def load_watchlist_suppliers(_session):
                 rs.RISK_SCORE,
                 rs.RISK_CATEGORY,
                 rs.UPDATED_AT
-            FROM RISK_SCORES rs
-            JOIN VENDORS v ON rs.NODE_ID = v.VENDOR_ID
+            FROM {DB_SCHEMA}.RISK_SCORES rs
+            JOIN {DB_SCHEMA}.VENDORS v ON rs.NODE_ID = v.VENDOR_ID
             WHERE rs.RISK_CATEGORY IN ('CRITICAL', 'HIGH', 'MEDIUM')
             ORDER BY rs.RISK_SCORE DESC
             LIMIT 20
@@ -387,17 +387,17 @@ def load_action_items(_session):
     actions = []
     
     queries = {
-        'unmitigated_bottlenecks': """
+        'unmitigated_bottlenecks': f"""
             SELECT NODE_ID, DEPENDENT_COUNT, IMPACT_SCORE
-            FROM BOTTLENECKS
+            FROM {DB_SCHEMA}.BOTTLENECKS
             WHERE MITIGATION_STATUS = 'UNMITIGATED' OR MITIGATION_STATUS IS NULL
             ORDER BY IMPACT_SCORE DESC
             LIMIT 5
         """,
-        'critical_suppliers': """
+        'critical_suppliers': f"""
             SELECT v.NAME, rs.RISK_SCORE
-            FROM RISK_SCORES rs
-            JOIN VENDORS v ON rs.NODE_ID = v.VENDOR_ID
+            FROM {DB_SCHEMA}.RISK_SCORES rs
+            JOIN {DB_SCHEMA}.VENDORS v ON rs.NODE_ID = v.VENDOR_ID
             WHERE rs.RISK_CATEGORY = 'CRITICAL'
             LIMIT 3
         """

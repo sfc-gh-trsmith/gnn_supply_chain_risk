@@ -12,6 +12,10 @@ import logging
 import time
 from typing import Dict, Any
 
+# Database/schema prefix for fully qualified table names
+# Used across all Streamlit pages for consistent table references
+DB_SCHEMA = "GNN_SUPPLY_CHAIN_RISK.GNN_SUPPLY_CHAIN_RISK"
+
 # Configure logging
 logger = logging.getLogger(__name__)
 

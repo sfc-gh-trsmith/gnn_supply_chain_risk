@@ -131,6 +131,14 @@ cmd_main() {
     echo "Notebook: $NOTEBOOK_NAME"
     echo ""
     
+    # Stop any existing services on the compute pool to ensure capacity
+    echo "Stopping any existing services on compute pool..."
+    snow sql $SNOW_CONN -q "
+        USE ROLE ACCOUNTADMIN;
+        ALTER COMPUTE POOL ${COMPUTE_POOL} STOP ALL;
+    " 2>/dev/null && echo -e "${GREEN}[OK]${NC} Compute pool cleared" || echo -e "${YELLOW}[WARN]${NC} Could not clear compute pool (may already be empty)"
+    echo ""
+    
     echo "Starting notebook execution..."
     echo "This may take several minutes on first run (GPU initialization)."
     echo ""

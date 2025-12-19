@@ -14,7 +14,7 @@ from snowflake.snowpark.context import get_active_session
 
 # Add parent directory to path for utils import (needed for Streamlit in Snowflake)
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.data_loader import run_queries_parallel
+from utils.data_loader import run_queries_parallel, DB_SCHEMA
 from utils.sidebar import render_sidebar, render_star_callout
 from utils.risk_narratives import (
     render_risk_intelligence_card,
@@ -185,11 +185,11 @@ def load_discovery_summary(_session):
     
     # Define all queries for parallel execution (5 queries)
     queries = {
-        'total_bottlenecks': "SELECT COUNT(*) as CNT FROM BOTTLENECKS",
-        'critical_bottlenecks': "SELECT COUNT(*) as CNT FROM BOTTLENECKS WHERE IMPACT_SCORE >= 0.7",
-        'predicted_links': "SELECT COUNT(*) as CNT FROM PREDICTED_LINKS",
-        'high_confidence_links': "SELECT COUNT(*) as CNT FROM PREDICTED_LINKS WHERE PROBABILITY >= 0.7",
-        'total_dependencies': "SELECT COALESCE(SUM(DEPENDENT_COUNT), 0) as CNT FROM BOTTLENECKS"
+        'total_bottlenecks': f"SELECT COUNT(*) as CNT FROM {DB_SCHEMA}.BOTTLENECKS",
+        'critical_bottlenecks': f"SELECT COUNT(*) as CNT FROM {DB_SCHEMA}.BOTTLENECKS WHERE IMPACT_SCORE >= 0.7",
+        'predicted_links': f"SELECT COUNT(*) as CNT FROM {DB_SCHEMA}.PREDICTED_LINKS",
+        'high_confidence_links': f"SELECT COUNT(*) as CNT FROM {DB_SCHEMA}.PREDICTED_LINKS WHERE PROBABILITY >= 0.7",
+        'total_dependencies': f"SELECT COALESCE(SUM(DEPENDENT_COUNT), 0) as CNT FROM {DB_SCHEMA}.BOTTLENECKS"
     }
     
     # Execute all queries in parallel
@@ -211,7 +211,7 @@ def load_discovery_summary(_session):
 def load_all_bottlenecks(_session):
     """Load all identified bottlenecks with details."""
     try:
-        result = _session.sql("""
+        result = _session.sql(f"""
             SELECT 
                 NODE_ID,
                 NODE_TYPE,
@@ -220,7 +220,7 @@ def load_all_bottlenecks(_session):
                 DESCRIPTION,
                 MITIGATION_STATUS,
                 IDENTIFIED_AT
-            FROM BOTTLENECKS
+            FROM {DB_SCHEMA}.BOTTLENECKS
             ORDER BY IMPACT_SCORE DESC
         """).to_pandas()
         return result
@@ -239,9 +239,9 @@ def load_bottleneck_dependents(_session, bottleneck_id):
                 v.COUNTRY_CODE,
                 pl.PROBABILITY,
                 rs.RISK_SCORE
-            FROM PREDICTED_LINKS pl
-            LEFT JOIN VENDORS v ON pl.TARGET_NODE_ID = v.VENDOR_ID
-            LEFT JOIN RISK_SCORES rs ON v.VENDOR_ID = rs.NODE_ID
+            FROM {DB_SCHEMA}.PREDICTED_LINKS pl
+            LEFT JOIN {DB_SCHEMA}.VENDORS v ON pl.TARGET_NODE_ID = v.VENDOR_ID
+            LEFT JOIN {DB_SCHEMA}.RISK_SCORES rs ON v.VENDOR_ID = rs.NODE_ID
             WHERE pl.SOURCE_NODE_ID = '{bottleneck_id}'
             ORDER BY pl.PROBABILITY DESC
         """).to_pandas()
@@ -262,7 +262,7 @@ def load_trade_evidence(_session, bottleneck_id):
                 SUM(WEIGHT_KG) as TOTAL_WEIGHT,
                 COUNT(*) as SHIPMENT_COUNT,
                 SUM(VALUE_USD) as TOTAL_VALUE
-            FROM TRADE_DATA
+            FROM {DB_SCHEMA}.TRADE_DATA
             WHERE SHIPPER_NAME = '{bottleneck_id}'
             GROUP BY CONSIGNEE_NAME, HS_CODE, HS_DESCRIPTION
             ORDER BY TOTAL_WEIGHT DESC
@@ -285,7 +285,7 @@ def load_all_predicted_links(_session, min_probability=0.3):
                 PROBABILITY,
                 EVIDENCE_STRENGTH,
                 PREDICTED_AT
-            FROM PREDICTED_LINKS
+            FROM {DB_SCHEMA}.PREDICTED_LINKS
             WHERE PROBABILITY >= {min_probability}
             ORDER BY PROBABILITY DESC
         """).to_pandas()
@@ -313,9 +313,9 @@ def prefetch_all_bottleneck_dependents(_session, bottleneck_ids: list):
                 v.COUNTRY_CODE,
                 pl.PROBABILITY,
                 rs.RISK_SCORE
-            FROM PREDICTED_LINKS pl
-            LEFT JOIN VENDORS v ON pl.TARGET_NODE_ID = v.VENDOR_ID
-            LEFT JOIN RISK_SCORES rs ON v.VENDOR_ID = rs.NODE_ID
+            FROM {DB_SCHEMA}.PREDICTED_LINKS pl
+            LEFT JOIN {DB_SCHEMA}.VENDORS v ON pl.TARGET_NODE_ID = v.VENDOR_ID
+            LEFT JOIN {DB_SCHEMA}.RISK_SCORES rs ON v.VENDOR_ID = rs.NODE_ID
             WHERE pl.SOURCE_NODE_ID = '{bid}'
             ORDER BY pl.PROBABILITY DESC
         """

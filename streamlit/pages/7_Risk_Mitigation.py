@@ -13,7 +13,7 @@ from snowflake.snowpark.context import get_active_session
 
 # Add parent directory to path for utils import (needed for Streamlit in Snowflake)
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.data_loader import run_queries_parallel
+from utils.data_loader import run_queries_parallel, DB_SCHEMA
 from utils.sidebar import render_sidebar, render_star_callout
 
 st.set_page_config(
@@ -164,8 +164,8 @@ def load_high_risk_suppliers(_session, limit=15):
                 rs.RISK_CATEGORY,
                 rs.CONFIDENCE,
                 v.FINANCIAL_HEALTH_SCORE
-            FROM RISK_SCORES rs
-            LEFT JOIN VENDORS v ON rs.NODE_ID = v.VENDOR_ID
+            FROM {DB_SCHEMA}.RISK_SCORES rs
+            LEFT JOIN {DB_SCHEMA}.VENDORS v ON rs.NODE_ID = v.VENDOR_ID
             WHERE rs.NODE_TYPE = 'SUPPLIER'
             ORDER BY rs.RISK_SCORE DESC
             LIMIT {limit}
@@ -180,18 +180,18 @@ def load_risk_matrix_data(_session):
     """Load data for risk matrix visualization."""
     try:
         # Suppliers with risk scores
-        df = _session.sql("""
+        df = _session.sql(f"""
             SELECT 
                 rs.NODE_ID as ID,
                 COALESCE(v.NAME, rs.NODE_ID) as NAME,
                 rs.RISK_SCORE as PROBABILITY,
                 COALESCE(b.IMPACT_SCORE, rs.RISK_SCORE * 0.5) as IMPACT,
                 'SUPPLIER' as CATEGORY
-            FROM RISK_SCORES rs
-            LEFT JOIN VENDORS v ON rs.NODE_ID = v.VENDOR_ID
+            FROM {DB_SCHEMA}.RISK_SCORES rs
+            LEFT JOIN {DB_SCHEMA}.VENDORS v ON rs.NODE_ID = v.VENDOR_ID
             LEFT JOIN (
                 SELECT TARGET_NODE_ID, MAX(PROBABILITY) as IMPACT_SCORE
-                FROM PREDICTED_LINKS
+                FROM {DB_SCHEMA}.PREDICTED_LINKS
                 GROUP BY TARGET_NODE_ID
             ) b ON rs.NODE_ID = b.TARGET_NODE_ID
             WHERE rs.NODE_TYPE = 'SUPPLIER'
@@ -226,17 +226,17 @@ def load_recommended_actions(_session):
     
     # Define queries for parallel execution
     queries = {
-        'bottlenecks': """
+        'bottlenecks': f"""
             SELECT NODE_ID, DEPENDENT_COUNT, IMPACT_SCORE, DESCRIPTION
-            FROM BOTTLENECKS
+            FROM {DB_SCHEMA}.BOTTLENECKS
             WHERE IMPACT_SCORE >= 0.5
             ORDER BY IMPACT_SCORE DESC
             LIMIT 5
         """,
-        'high_risk': """
+        'high_risk': f"""
             SELECT v.NAME, rs.RISK_SCORE, v.COUNTRY_CODE
-            FROM RISK_SCORES rs
-            JOIN VENDORS v ON rs.NODE_ID = v.VENDOR_ID
+            FROM {DB_SCHEMA}.RISK_SCORES rs
+            JOIN {DB_SCHEMA}.VENDORS v ON rs.NODE_ID = v.VENDOR_ID
             WHERE rs.NODE_TYPE = 'SUPPLIER' AND rs.RISK_CATEGORY IN ('CRITICAL', 'HIGH')
             ORDER BY rs.RISK_SCORE DESC
             LIMIT 3

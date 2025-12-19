@@ -211,7 +211,7 @@ The GNN Supply Chain Risk project uses Graph Neural Networks to analyze supply c
 ```
 
 **Commands**:
-- `main`: Executes the notebook, then verifies output tables
+- `main`: Stops any existing compute pool services, executes the notebook, then verifies output tables
 - `status`: Shows compute pool, warehouse, all table row counts
 - `notebook`: Provides instructions to open notebook in Snowsight
 - `streamlit`: Retrieves Streamlit app URL
@@ -480,6 +480,34 @@ snow sql -c demo -q "DESCRIBE COMPUTE POOL GNN_SUPPLY_CHAIN_RISK_COMPUTE_POOL;"
    ALTER COMPUTE POOL GNN_SUPPLY_CHAIN_RISK_COMPUTE_POOL RESUME;
    ```
 
+#### Issue: Compute Pool Full / Notebook Unschedulable
+
+**Symptom**: Error `505123 (XX000): Notebook service is unschedulable in full compute pool`
+
+**Cause**: A previous notebook session is still running on the compute pool, consuming the only available node.
+
+**Diagnosis**:
+```bash
+# Check compute pool services
+snow sql -c demo --format json -q "
+    USE ROLE ACCOUNTADMIN;
+    SHOW SERVICES IN COMPUTE POOL GNN_SUPPLY_CHAIN_RISK_COMPUTE_POOL;
+"
+```
+
+**Solutions**:
+1. The `./run.sh main` command now automatically stops existing services before execution
+2. Manually stop all services:
+   ```sql
+   USE ROLE ACCOUNTADMIN;
+   ALTER COMPUTE POOL GNN_SUPPLY_CHAIN_RISK_COMPUTE_POOL STOP ALL;
+   ```
+3. Wait for auto-suspend (10 minutes by default)
+
+**Note**: This issue cannot occur after a clean/deploy cycle because `clean.sh` drops the entire compute pool. It typically happens when:
+- Running the notebook interactively in Snowsight before using `./run.sh main`
+- Re-running `./run.sh main` while a previous execution is still active
+
 #### Issue: Live Version Not Found
 
 **Symptom**: `099108 (22000): Live version is not found`
@@ -552,6 +580,27 @@ snow sql -c demo -q "
 ./deploy.sh --only-streamlit
 ```
 
+#### Issue: Streamlit Queries Return Empty or Error
+
+**Symptom**: Streamlit pages show "No data" or error `Unsupported statement type 'USE'`
+
+**Cause**: Streamlit in Snowflake runs as a stored procedure where `USE DATABASE` and `USE SCHEMA` statements are not supported. Queries must use fully qualified table names.
+
+**Solution**: All SQL queries in Streamlit must use the format `DATABASE.SCHEMA.TABLE`. The codebase uses a shared constant:
+
+```python
+# In utils/data_loader.py
+DB_SCHEMA = "GNN_SUPPLY_CHAIN_RISK.GNN_SUPPLY_CHAIN_RISK"
+
+# Usage in queries
+result = session.sql(f"SELECT * FROM {DB_SCHEMA}.RISK_SCORES").to_pandas()
+```
+
+**Note**: This is already implemented in all Streamlit pages. If adding new queries, always import and use `DB_SCHEMA`:
+```python
+from utils.data_loader import run_queries_parallel, DB_SCHEMA
+```
+
 ### Incremental Recovery
 
 When deployment fails partway through:
@@ -605,6 +654,7 @@ When deployment fails partway through:
 | `notebooks/environment.yml` | Notebook dependencies |
 | `streamlit/snowflake.yml` | Streamlit configuration |
 | `streamlit/streamlit_app.py` | Streamlit entry point |
+| `streamlit/utils/data_loader.py` | Parallel query utilities and DB_SCHEMA constant |
 
 ---
 

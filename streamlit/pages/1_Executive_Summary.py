@@ -15,7 +15,7 @@ from snowflake.snowpark.context import get_active_session
 
 # Add parent directory to path for utils import (needed for Streamlit in Snowflake)
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.data_loader import run_queries_parallel
+from utils.data_loader import run_queries_parallel, DB_SCHEMA
 from utils.sidebar import render_sidebar, render_star_callout
 
 st.set_page_config(
@@ -173,7 +173,7 @@ def load_executive_metrics(_session):
     """Load executive-level KPIs using parallel query execution."""
     
     queries = {
-        'risk_summary': """
+        'risk_summary': f"""
             SELECT 
                 COUNT(*) as TOTAL_NODES,
                 SUM(CASE WHEN RISK_CATEGORY = 'CRITICAL' THEN 1 ELSE 0 END) as CRITICAL_COUNT,
@@ -181,34 +181,34 @@ def load_executive_metrics(_session):
                 SUM(CASE WHEN RISK_CATEGORY = 'MEDIUM' THEN 1 ELSE 0 END) as MEDIUM_COUNT,
                 SUM(CASE WHEN RISK_CATEGORY = 'LOW' THEN 1 ELSE 0 END) as LOW_COUNT,
                 ROUND(AVG(RISK_SCORE), 3) as AVG_RISK_SCORE
-            FROM RISK_SCORES
+            FROM {DB_SCHEMA}.RISK_SCORES
         """,
-        'vendor_summary': """
+        'vendor_summary': f"""
             SELECT 
                 COUNT(*) as TOTAL_VENDORS,
                 COUNT(DISTINCT COUNTRY_CODE) as COUNTRY_COUNT,
                 ROUND(AVG(FINANCIAL_HEALTH_SCORE), 3) as AVG_HEALTH
-            FROM VENDORS
+            FROM {DB_SCHEMA}.VENDORS
         """,
-        'bottleneck_summary': """
+        'bottleneck_summary': f"""
             SELECT 
                 COUNT(*) as TOTAL_BOTTLENECKS,
                 SUM(DEPENDENT_COUNT) as TOTAL_AT_RISK_VENDORS,
                 ROUND(MAX(IMPACT_SCORE), 3) as MAX_IMPACT
-            FROM BOTTLENECKS
+            FROM {DB_SCHEMA}.BOTTLENECKS
         """,
-        'prediction_summary': """
+        'prediction_summary': f"""
             SELECT 
                 COUNT(*) as TOTAL_PREDICTIONS,
                 SUM(CASE WHEN PROBABILITY >= 0.7 THEN 1 ELSE 0 END) as HIGH_CONFIDENCE,
                 ROUND(AVG(PROBABILITY), 3) as AVG_CONFIDENCE
-            FROM PREDICTED_LINKS
+            FROM {DB_SCHEMA}.PREDICTED_LINKS
         """,
-        'material_summary': """
+        'material_summary': f"""
             SELECT 
                 COUNT(*) as TOTAL_MATERIALS,
                 ROUND(AVG(CRITICALITY_SCORE), 3) as AVG_CRITICALITY
-            FROM MATERIALS
+            FROM {DB_SCHEMA}.MATERIALS
         """
     }
     
@@ -219,7 +219,7 @@ def load_executive_metrics(_session):
 def load_regional_risk(_session):
     """Load risk aggregated by region."""
     try:
-        result = _session.sql("""
+        result = _session.sql(f"""
             SELECT 
                 v.COUNTRY_CODE,
                 COALESCE(r.REGION_NAME, v.COUNTRY_CODE) as REGION_NAME,
@@ -229,9 +229,9 @@ def load_regional_risk(_session):
                 r.GEOPOLITICAL_RISK,
                 r.NATURAL_DISASTER_RISK,
                 SUM(CASE WHEN rs.RISK_CATEGORY IN ('CRITICAL', 'HIGH') THEN 1 ELSE 0 END) as HIGH_RISK_COUNT
-            FROM VENDORS v
-            LEFT JOIN REGIONS r ON v.COUNTRY_CODE = r.REGION_CODE
-            LEFT JOIN RISK_SCORES rs ON v.VENDOR_ID = rs.NODE_ID
+            FROM {DB_SCHEMA}.VENDORS v
+            LEFT JOIN {DB_SCHEMA}.REGIONS r ON v.COUNTRY_CODE = r.REGION_CODE
+            LEFT JOIN {DB_SCHEMA}.RISK_SCORES rs ON v.VENDOR_ID = rs.NODE_ID
             GROUP BY v.COUNTRY_CODE, r.REGION_NAME, r.GEOPOLITICAL_RISK, r.NATURAL_DISASTER_RISK
             ORDER BY AVG_RISK DESC NULLS LAST
         """).to_pandas()
@@ -252,7 +252,7 @@ def load_top_concentration_risks(_session, limit=5):
                 IMPACT_SCORE,
                 DESCRIPTION,
                 MITIGATION_STATUS
-            FROM BOTTLENECKS
+            FROM {DB_SCHEMA}.BOTTLENECKS
             ORDER BY IMPACT_SCORE DESC
             LIMIT {limit}
         """).to_pandas()
@@ -265,15 +265,15 @@ def load_top_concentration_risks(_session, limit=5):
 def load_spend_at_risk(_session):
     """Calculate estimated spend at risk based on supplier risk scores."""
     try:
-        result = _session.sql("""
+        result = _session.sql(f"""
             SELECT 
                 SUM(po.QUANTITY * po.UNIT_PRICE) as TOTAL_SPEND,
                 SUM(CASE WHEN rs.RISK_CATEGORY IN ('CRITICAL', 'HIGH') 
                     THEN po.QUANTITY * po.UNIT_PRICE ELSE 0 END) as HIGH_RISK_SPEND,
                 SUM(CASE WHEN rs.RISK_CATEGORY = 'CRITICAL' 
                     THEN po.QUANTITY * po.UNIT_PRICE ELSE 0 END) as CRITICAL_RISK_SPEND
-            FROM PURCHASE_ORDERS po
-            LEFT JOIN RISK_SCORES rs ON po.VENDOR_ID = rs.NODE_ID
+            FROM {DB_SCHEMA}.PURCHASE_ORDERS po
+            LEFT JOIN {DB_SCHEMA}.RISK_SCORES rs ON po.VENDOR_ID = rs.NODE_ID
         """).to_pandas()
         return result
     except Exception:

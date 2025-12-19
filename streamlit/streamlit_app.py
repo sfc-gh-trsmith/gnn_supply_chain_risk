@@ -15,7 +15,7 @@ from snowflake.snowpark.context import get_active_session
 
 # Add current directory to path for utils import (needed for Streamlit in Snowflake)
 sys.path.insert(0, str(Path(__file__).parent))
-from utils.data_loader import run_queries_parallel
+from utils.data_loader import run_queries_parallel, DB_SCHEMA
 from utils.sidebar import render_sidebar, render_star_callout
 
 # Page configuration
@@ -221,10 +221,10 @@ def load_key_metrics(_session):
     
     # Define all queries for parallel execution (4 queries)
     queries = {
-        'total_nodes': "SELECT COUNT(*) as CNT FROM RISK_SCORES",
-        'critical_count': "SELECT COUNT(*) as CNT FROM RISK_SCORES WHERE RISK_CATEGORY = 'CRITICAL'",
-        'bottleneck_count': "SELECT COUNT(*) as CNT FROM BOTTLENECKS",
-        'predicted_links': "SELECT COUNT(*) as CNT FROM PREDICTED_LINKS"
+        'total_nodes': f"SELECT COUNT(*) as CNT FROM {DB_SCHEMA}.RISK_SCORES",
+        'critical_count': f"SELECT COUNT(*) as CNT FROM {DB_SCHEMA}.RISK_SCORES WHERE RISK_CATEGORY = 'CRITICAL'",
+        'bottleneck_count': f"SELECT COUNT(*) as CNT FROM {DB_SCHEMA}.BOTTLENECKS",
+        'predicted_links': f"SELECT COUNT(*) as CNT FROM {DB_SCHEMA}.PREDICTED_LINKS"
     }
     
     # Execute all queries in parallel
@@ -249,9 +249,9 @@ def load_illusion_data(_session):
     
     # Get top bottleneck (the hidden Tier-2 supplier)
     try:
-        bottleneck = _session.sql("""
+        bottleneck = _session.sql(f"""
             SELECT NODE_ID, DEPENDENT_COUNT, IMPACT_SCORE, DESCRIPTION
-        FROM BOTTLENECKS
+            FROM {DB_SCHEMA}.BOTTLENECKS
             ORDER BY DEPENDENT_COUNT DESC
             LIMIT 1
         """).to_pandas()
@@ -263,15 +263,15 @@ def load_illusion_data(_session):
         
         # Get the vendors that depend on this bottleneck
         dependent_vendors = _session.sql(f"""
-        SELECT 
+            SELECT 
                 pl.TARGET_NODE_ID as VENDOR_ID,
-            v.NAME as VENDOR_NAME,
-            v.COUNTRY_CODE,
+                v.NAME as VENDOR_NAME,
+                v.COUNTRY_CODE,
                 pl.PROBABILITY,
                 rs.RISK_SCORE
-            FROM PREDICTED_LINKS pl
-            LEFT JOIN VENDORS v ON pl.TARGET_NODE_ID = v.VENDOR_ID
-            LEFT JOIN RISK_SCORES rs ON v.VENDOR_ID = rs.NODE_ID
+            FROM {DB_SCHEMA}.PREDICTED_LINKS pl
+            LEFT JOIN {DB_SCHEMA}.VENDORS v ON pl.TARGET_NODE_ID = v.VENDOR_ID
+            LEFT JOIN {DB_SCHEMA}.RISK_SCORES rs ON v.VENDOR_ID = rs.NODE_ID
             WHERE pl.SOURCE_NODE_ID = '{bottleneck_id}'
             ORDER BY pl.PROBABILITY DESC
             LIMIT 10
@@ -319,18 +319,18 @@ def load_illusion_data(_session):
 def load_vendor_distribution(_session):
     """Load vendor distribution by country and financial health."""
     queries = {
-        'geo_dist': """
+        'geo_dist': f"""
             SELECT 
                 v.COUNTRY_CODE,
                 COALESCE(r.REGION_NAME, v.COUNTRY_CODE) as COUNTRY_NAME,
                 COUNT(*) as VENDOR_COUNT,
                 AVG(v.FINANCIAL_HEALTH_SCORE) as AVG_HEALTH
-            FROM VENDORS v
-            LEFT JOIN REGIONS r ON v.COUNTRY_CODE = r.REGION_CODE
+            FROM {DB_SCHEMA}.VENDORS v
+            LEFT JOIN {DB_SCHEMA}.REGIONS r ON v.COUNTRY_CODE = r.REGION_CODE
             GROUP BY v.COUNTRY_CODE, r.REGION_NAME
             ORDER BY VENDOR_COUNT DESC
         """,
-        'health_dist': """
+        'health_dist': f"""
             SELECT 
                 CASE 
                     WHEN FINANCIAL_HEALTH_SCORE >= 0.8 THEN 'Excellent (0.8-1.0)'
@@ -340,16 +340,16 @@ def load_vendor_distribution(_session):
                     ELSE 'Critical (0-0.2)'
                 END as HEALTH_BUCKET,
                 COUNT(*) as VENDOR_COUNT
-            FROM VENDORS
+            FROM {DB_SCHEMA}.VENDORS
             GROUP BY HEALTH_BUCKET
             ORDER BY MIN(FINANCIAL_HEALTH_SCORE) DESC
         """,
-        'summary': """
+        'summary': f"""
             SELECT 
                 COUNT(*) as TOTAL_VENDORS,
                 COUNT(DISTINCT COUNTRY_CODE) as COUNTRY_COUNT,
                 AVG(FINANCIAL_HEALTH_SCORE) as AVG_HEALTH
-            FROM VENDORS
+            FROM {DB_SCHEMA}.VENDORS
         """
     }
     return run_queries_parallel(_session, queries, max_workers=3)
@@ -359,25 +359,25 @@ def load_vendor_distribution(_session):
 def load_spend_analysis(_session):
     """Load purchase order spend analysis by vendor."""
     queries = {
-        'top_vendors': """
+        'top_vendors': f"""
             SELECT 
                 v.VENDOR_ID,
                 v.NAME as VENDOR_NAME,
                 v.COUNTRY_CODE,
                 COUNT(po.PO_ID) as ORDER_COUNT,
                 SUM(po.QUANTITY * po.UNIT_PRICE) as TOTAL_SPEND
-            FROM PURCHASE_ORDERS po
-            JOIN VENDORS v ON po.VENDOR_ID = v.VENDOR_ID
+            FROM {DB_SCHEMA}.PURCHASE_ORDERS po
+            JOIN {DB_SCHEMA}.VENDORS v ON po.VENDOR_ID = v.VENDOR_ID
             GROUP BY v.VENDOR_ID, v.NAME, v.COUNTRY_CODE
             ORDER BY TOTAL_SPEND DESC
             LIMIT 15
         """,
-        'spend_summary': """
+        'spend_summary': f"""
             SELECT 
                 COUNT(DISTINCT VENDOR_ID) as ACTIVE_VENDORS,
                 COUNT(*) as TOTAL_ORDERS,
                 SUM(QUANTITY * UNIT_PRICE) as TOTAL_SPEND
-            FROM PURCHASE_ORDERS
+            FROM {DB_SCHEMA}.PURCHASE_ORDERS
         """
     }
     return run_queries_parallel(_session, queries, max_workers=2)
@@ -387,26 +387,26 @@ def load_spend_analysis(_session):
 def load_material_sourcing(_session):
     """Load material portfolio and sourcing strategy analysis."""
     queries = {
-        'material_groups': """
+        'material_groups': f"""
             SELECT 
                 MATERIAL_GROUP,
                 COUNT(*) as MATERIAL_COUNT,
                 AVG(CRITICALITY_SCORE) as AVG_CRITICALITY
-            FROM MATERIALS
+            FROM {DB_SCHEMA}.MATERIALS
             GROUP BY MATERIAL_GROUP
             ORDER BY MATERIAL_COUNT DESC
         """,
-        'sourcing_strategy': """
+        'sourcing_strategy': f"""
             SELECT 
                 m.MATERIAL_ID,
                 m.DESCRIPTION,
                 m.CRITICALITY_SCORE,
                 COUNT(DISTINCT po.VENDOR_ID) as SUPPLIER_COUNT
-            FROM MATERIALS m
-            LEFT JOIN PURCHASE_ORDERS po ON m.MATERIAL_ID = po.MATERIAL_ID
+            FROM {DB_SCHEMA}.MATERIALS m
+            LEFT JOIN {DB_SCHEMA}.PURCHASE_ORDERS po ON m.MATERIAL_ID = po.MATERIAL_ID
             GROUP BY m.MATERIAL_ID, m.DESCRIPTION, m.CRITICALITY_SCORE
         """,
-        'sourcing_summary': """
+        'sourcing_summary': f"""
             SELECT 
                 CASE 
                     WHEN supplier_count = 0 THEN 'No Suppliers'
@@ -417,8 +417,8 @@ def load_material_sourcing(_session):
                 COUNT(*) as MATERIAL_COUNT
             FROM (
                 SELECT m.MATERIAL_ID, COUNT(DISTINCT po.VENDOR_ID) as supplier_count
-                FROM MATERIALS m
-                LEFT JOIN PURCHASE_ORDERS po ON m.MATERIAL_ID = po.MATERIAL_ID
+                FROM {DB_SCHEMA}.MATERIALS m
+                LEFT JOIN {DB_SCHEMA}.PURCHASE_ORDERS po ON m.MATERIAL_ID = po.MATERIAL_ID
                 GROUP BY m.MATERIAL_ID
             )
             GROUP BY SOURCING_TYPE
@@ -431,33 +431,33 @@ def load_material_sourcing(_session):
 def load_bom_structure(_session):
     """Load bill of materials structure analysis."""
     queries = {
-        'bom_stats': """
+        'bom_stats': f"""
             SELECT 
                 COUNT(*) as TOTAL_RELATIONSHIPS,
                 COUNT(DISTINCT PARENT_MATERIAL_ID) as PARENT_COUNT,
                 COUNT(DISTINCT CHILD_MATERIAL_ID) as COMPONENT_COUNT
-            FROM BILL_OF_MATERIALS
+            FROM {DB_SCHEMA}.BILL_OF_MATERIALS
         """,
-        'component_reuse': """
+        'component_reuse': f"""
             SELECT 
                 b.CHILD_MATERIAL_ID,
                 m.DESCRIPTION,
                 COUNT(DISTINCT b.PARENT_MATERIAL_ID) as USED_IN_COUNT
-            FROM BILL_OF_MATERIALS b
-            JOIN MATERIALS m ON b.CHILD_MATERIAL_ID = m.MATERIAL_ID
+            FROM {DB_SCHEMA}.BILL_OF_MATERIALS b
+            JOIN {DB_SCHEMA}.MATERIALS m ON b.CHILD_MATERIAL_ID = m.MATERIAL_ID
             GROUP BY b.CHILD_MATERIAL_ID, m.DESCRIPTION
             HAVING COUNT(DISTINCT b.PARENT_MATERIAL_ID) > 1
             ORDER BY USED_IN_COUNT DESC
             LIMIT 10
         """,
-        'depth_analysis': """
+        'depth_analysis': f"""
             WITH RECURSIVE bom_depth AS (
                 SELECT PARENT_MATERIAL_ID, CHILD_MATERIAL_ID, 1 as DEPTH
-                FROM BILL_OF_MATERIALS
-                WHERE PARENT_MATERIAL_ID NOT IN (SELECT CHILD_MATERIAL_ID FROM BILL_OF_MATERIALS)
+                FROM {DB_SCHEMA}.BILL_OF_MATERIALS
+                WHERE PARENT_MATERIAL_ID NOT IN (SELECT CHILD_MATERIAL_ID FROM {DB_SCHEMA}.BILL_OF_MATERIALS)
                 UNION ALL
                 SELECT b.PARENT_MATERIAL_ID, b.CHILD_MATERIAL_ID, bd.DEPTH + 1
-                FROM BILL_OF_MATERIALS b
+                FROM {DB_SCHEMA}.BILL_OF_MATERIALS b
                 JOIN bom_depth bd ON b.PARENT_MATERIAL_ID = bd.CHILD_MATERIAL_ID
                 WHERE bd.DEPTH < 10
             )
@@ -474,36 +474,36 @@ def load_bom_structure(_session):
 def load_trade_preview(_session):
     """Load trade data preview for external intelligence."""
     queries = {
-        'origin_distribution': """
+        'origin_distribution': f"""
             SELECT 
                 SHIPPER_COUNTRY,
                 COUNT(*) as SHIPMENT_COUNT,
                 COUNT(DISTINCT SHIPPER_NAME) as SHIPPER_COUNT,
                 SUM(WEIGHT_KG) as TOTAL_WEIGHT_KG
-            FROM TRADE_DATA
+            FROM {DB_SCHEMA}.TRADE_DATA
             WHERE SHIPPER_COUNTRY IS NOT NULL
             GROUP BY SHIPPER_COUNTRY
             ORDER BY SHIPMENT_COUNT DESC
             LIMIT 10
         """,
-        'top_shippers': """
+        'top_shippers': f"""
             SELECT 
                 SHIPPER_NAME,
                 SHIPPER_COUNTRY,
                 COUNT(*) as SHIPMENT_COUNT,
                 COUNT(DISTINCT CONSIGNEE_NAME) as CUSTOMER_COUNT
-            FROM TRADE_DATA
+            FROM {DB_SCHEMA}.TRADE_DATA
             GROUP BY SHIPPER_NAME, SHIPPER_COUNTRY
             ORDER BY SHIPMENT_COUNT DESC
             LIMIT 10
         """,
-        'trade_summary': """
+        'trade_summary': f"""
             SELECT 
                 COUNT(*) as TOTAL_SHIPMENTS,
                 COUNT(DISTINCT SHIPPER_NAME) as UNIQUE_SHIPPERS,
                 COUNT(DISTINCT CONSIGNEE_NAME) as UNIQUE_CONSIGNEES,
                 COUNT(DISTINCT SHIPPER_COUNTRY) as ORIGIN_COUNTRIES
-            FROM TRADE_DATA
+            FROM {DB_SCHEMA}.TRADE_DATA
         """
     }
     return run_queries_parallel(_session, queries, max_workers=3)
@@ -513,7 +513,7 @@ def load_trade_preview(_session):
 def load_region_exposure(_session):
     """Load region risk exposure analysis."""
     queries = {
-        'risk_exposure': """
+        'risk_exposure': f"""
             SELECT 
                 r.REGION_CODE,
                 r.REGION_NAME,
@@ -521,13 +521,13 @@ def load_region_exposure(_session):
                 r.GEOPOLITICAL_RISK,
                 r.NATURAL_DISASTER_RISK,
                 COUNT(v.VENDOR_ID) as VENDOR_COUNT
-            FROM REGIONS r
-            LEFT JOIN VENDORS v ON r.REGION_CODE = v.COUNTRY_CODE
+            FROM {DB_SCHEMA}.REGIONS r
+            LEFT JOIN {DB_SCHEMA}.VENDORS v ON r.REGION_CODE = v.COUNTRY_CODE
             GROUP BY r.REGION_CODE, r.REGION_NAME, r.BASE_RISK_SCORE, 
                      r.GEOPOLITICAL_RISK, r.NATURAL_DISASTER_RISK
             ORDER BY VENDOR_COUNT DESC
         """,
-        'risk_buckets': """
+        'risk_buckets': f"""
             SELECT 
                 CASE 
                     WHEN r.BASE_RISK_SCORE >= 0.7 THEN 'High Risk'
@@ -535,8 +535,8 @@ def load_region_exposure(_session):
                     ELSE 'Low Risk'
                 END as RISK_LEVEL,
                 COUNT(DISTINCT v.VENDOR_ID) as VENDOR_COUNT
-            FROM VENDORS v
-            LEFT JOIN REGIONS r ON v.COUNTRY_CODE = r.REGION_CODE
+            FROM {DB_SCHEMA}.VENDORS v
+            LEFT JOIN {DB_SCHEMA}.REGIONS r ON v.COUNTRY_CODE = r.REGION_CODE
             GROUP BY RISK_LEVEL
         """
     }

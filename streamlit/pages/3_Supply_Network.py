@@ -15,7 +15,7 @@ from snowflake.snowpark.context import get_active_session
 
 # Add parent directory to path for utils import (needed for Streamlit in Snowflake)
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.data_loader import run_queries_parallel
+from utils.data_loader import run_queries_parallel, DB_SCHEMA
 from utils.sidebar import render_sidebar, render_star_callout
 
 # Country coordinates (centroids) - ISO-3 to lat/lon mapping
@@ -141,15 +141,15 @@ def load_graph_data(_session, include_predicted=True):
     
     # Load vendors as nodes
     try:
-        vendors = _session.sql("""
+        vendors = _session.sql(f"""
             SELECT 
                 v.VENDOR_ID as ID,
                 v.NAME as LABEL,
                 v.COUNTRY_CODE,
                 rs.RISK_SCORE,
                 rs.RISK_CATEGORY
-            FROM VENDORS v
-            LEFT JOIN RISK_SCORES rs ON v.VENDOR_ID = rs.NODE_ID
+            FROM {DB_SCHEMA}.VENDORS v
+            LEFT JOIN {DB_SCHEMA}.RISK_SCORES rs ON v.VENDOR_ID = rs.NODE_ID
         """).to_pandas()
         
         for _, row in vendors.iterrows():
@@ -165,14 +165,14 @@ def load_graph_data(_session, include_predicted=True):
     
     # Load materials as nodes
     try:
-        materials = _session.sql("""
+        materials = _session.sql(f"""
             SELECT 
                 m.MATERIAL_ID as ID,
                 m.DESCRIPTION as LABEL,
                 m.MATERIAL_GROUP,
                 rs.RISK_SCORE
-            FROM MATERIALS m
-            LEFT JOIN RISK_SCORES rs ON m.MATERIAL_ID = rs.NODE_ID
+            FROM {DB_SCHEMA}.MATERIALS m
+            LEFT JOIN {DB_SCHEMA}.RISK_SCORES rs ON m.MATERIAL_ID = rs.NODE_ID
         """).to_pandas()
         
         for _, row in materials.iterrows():
@@ -188,9 +188,9 @@ def load_graph_data(_session, include_predicted=True):
     
     # Load purchase orders as edges (vendor -> material)
     try:
-        pos = _session.sql("""
+        pos = _session.sql(f"""
             SELECT DISTINCT VENDOR_ID as SOURCE, MATERIAL_ID as TARGET
-            FROM PURCHASE_ORDERS
+            FROM {DB_SCHEMA}.PURCHASE_ORDERS
         """).to_pandas()
         
         for _, row in pos.iterrows():
@@ -206,12 +206,12 @@ def load_graph_data(_session, include_predicted=True):
     # Load predicted links if requested
     if include_predicted:
         try:
-            predicted = _session.sql("""
+            predicted = _session.sql(f"""
                 SELECT 
                     SOURCE_NODE_ID as SOURCE,
                     TARGET_NODE_ID as TARGET,
                     PROBABILITY
-                FROM PREDICTED_LINKS
+                FROM {DB_SCHEMA}.PREDICTED_LINKS
                 WHERE PROBABILITY >= 0.3
             """).to_pandas()
             

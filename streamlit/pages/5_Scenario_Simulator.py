@@ -16,7 +16,7 @@ from snowflake.snowpark.context import get_active_session
 
 # Add parent directory to path for utils import (needed for Streamlit in Snowflake)
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.data_loader import run_queries_parallel
+from utils.data_loader import run_queries_parallel, DB_SCHEMA
 from utils.sidebar import render_sidebar, render_star_callout
 from utils.risk_narratives import (
     render_risk_intelligence_card,
@@ -156,7 +156,7 @@ def get_session():
 def load_regions(_session):
     """Load available regions for simulation."""
     try:
-        result = _session.sql("""
+        result = _session.sql(f"""
             SELECT DISTINCT 
                 r.REGION_CODE,
                 r.REGION_NAME,
@@ -164,8 +164,8 @@ def load_regions(_session):
                 r.GEOPOLITICAL_RISK,
                 r.NATURAL_DISASTER_RISK,
                 COUNT(v.VENDOR_ID) as VENDOR_COUNT
-            FROM REGIONS r
-            LEFT JOIN VENDORS v ON r.REGION_CODE = v.COUNTRY_CODE
+            FROM {DB_SCHEMA}.REGIONS r
+            LEFT JOIN {DB_SCHEMA}.VENDORS v ON r.REGION_CODE = v.COUNTRY_CODE
             GROUP BY r.REGION_CODE, r.REGION_NAME, r.BASE_RISK_SCORE, 
                      r.GEOPOLITICAL_RISK, r.NATURAL_DISASTER_RISK
             HAVING COUNT(v.VENDOR_ID) > 0
@@ -180,14 +180,14 @@ def load_regions(_session):
 def load_bottlenecks(_session):
     """Load bottlenecks for simulation."""
     try:
-        result = _session.sql("""
+        result = _session.sql(f"""
             SELECT 
                 NODE_ID,
                 NODE_TYPE,
                 DEPENDENT_COUNT,
                 IMPACT_SCORE,
                 DESCRIPTION
-            FROM BOTTLENECKS
+            FROM {DB_SCHEMA}.BOTTLENECKS
             ORDER BY DEPENDENT_COUNT DESC
         """).to_pandas()
         return result
@@ -206,8 +206,8 @@ def load_vendors_by_region(_session, region_code: str):
                 v.COUNTRY_CODE,
                 rs.RISK_SCORE,
                 rs.RISK_CATEGORY
-            FROM VENDORS v
-            LEFT JOIN RISK_SCORES rs ON v.VENDOR_ID = rs.NODE_ID
+            FROM {DB_SCHEMA}.VENDORS v
+            LEFT JOIN {DB_SCHEMA}.RISK_SCORES rs ON v.VENDOR_ID = rs.NODE_ID
             WHERE v.COUNTRY_CODE = '{region_code}'
             ORDER BY rs.RISK_SCORE DESC NULLS LAST
         """).to_pandas()
@@ -231,8 +231,8 @@ def load_materials_by_vendors(_session, vendor_ids: list):
                 m.MATERIAL_GROUP,
                 m.CRITICALITY_SCORE,
                 po.VENDOR_ID
-            FROM PURCHASE_ORDERS po
-            JOIN MATERIALS m ON po.MATERIAL_ID = m.MATERIAL_ID
+            FROM {DB_SCHEMA}.PURCHASE_ORDERS po
+            JOIN {DB_SCHEMA}.MATERIALS m ON po.MATERIAL_ID = m.MATERIAL_ID
             WHERE po.VENDOR_ID IN ('{vendor_list}')
             ORDER BY m.CRITICALITY_SCORE DESC NULLS LAST
         """).to_pandas()
@@ -252,9 +252,9 @@ def load_bottleneck_dependents(_session, bottleneck_id: str):
                 v.COUNTRY_CODE,
                 pl.PROBABILITY,
                 rs.RISK_SCORE
-            FROM PREDICTED_LINKS pl
-            LEFT JOIN VENDORS v ON pl.TARGET_NODE_ID = v.VENDOR_ID
-            LEFT JOIN RISK_SCORES rs ON v.VENDOR_ID = rs.NODE_ID
+            FROM {DB_SCHEMA}.PREDICTED_LINKS pl
+            LEFT JOIN {DB_SCHEMA}.VENDORS v ON pl.TARGET_NODE_ID = v.VENDOR_ID
+            LEFT JOIN {DB_SCHEMA}.RISK_SCORES rs ON v.VENDOR_ID = rs.NODE_ID
             WHERE pl.SOURCE_NODE_ID = '{bottleneck_id}'
             ORDER BY pl.PROBABILITY DESC
         """).to_pandas()
@@ -285,10 +285,10 @@ def load_alternative_suppliers(_session, material_ids: list, excluded_vendors: l
                 m.MATERIAL_ID,
                 m.DESCRIPTION as MATERIAL_DESC,
                 rs.RISK_SCORE
-            FROM PURCHASE_ORDERS po
-            JOIN VENDORS v ON po.VENDOR_ID = v.VENDOR_ID
-            JOIN MATERIALS m ON po.MATERIAL_ID = m.MATERIAL_ID
-            LEFT JOIN RISK_SCORES rs ON v.VENDOR_ID = rs.NODE_ID
+            FROM {DB_SCHEMA}.PURCHASE_ORDERS po
+            JOIN {DB_SCHEMA}.VENDORS v ON po.VENDOR_ID = v.VENDOR_ID
+            JOIN {DB_SCHEMA}.MATERIALS m ON po.MATERIAL_ID = m.MATERIAL_ID
+            LEFT JOIN {DB_SCHEMA}.RISK_SCORES rs ON v.VENDOR_ID = rs.NODE_ID
             WHERE m.MATERIAL_ID IN ('{material_list}')
             {vendor_exclusion}
             ORDER BY rs.RISK_SCORE ASC NULLS LAST
@@ -316,7 +316,7 @@ def load_downstream_products(_session, material_ids: list):
                     PARENT_MATERIAL_ID,
                     CHILD_MATERIAL_ID,
                     1 as LEVEL
-                FROM BILL_OF_MATERIALS
+                FROM {DB_SCHEMA}.BILL_OF_MATERIALS
                 WHERE CHILD_MATERIAL_ID IN ('{material_list}')
                 
                 UNION ALL
@@ -326,7 +326,7 @@ def load_downstream_products(_session, material_ids: list):
                     b.PARENT_MATERIAL_ID,
                     pt.CHILD_MATERIAL_ID,
                     pt.LEVEL + 1
-                FROM BILL_OF_MATERIALS b
+                FROM {DB_SCHEMA}.BILL_OF_MATERIALS b
                 JOIN product_tree pt ON b.CHILD_MATERIAL_ID = pt.PARENT_MATERIAL_ID
                 WHERE pt.LEVEL < 5
             )
@@ -337,7 +337,7 @@ def load_downstream_products(_session, material_ids: list):
                 m.CRITICALITY_SCORE,
                 MIN(pt.LEVEL) as IMPACT_LEVEL
             FROM product_tree pt
-            JOIN MATERIALS m ON pt.PARENT_MATERIAL_ID = m.MATERIAL_ID
+            JOIN {DB_SCHEMA}.MATERIALS m ON pt.PARENT_MATERIAL_ID = m.MATERIAL_ID
             WHERE m.MATERIAL_GROUP = 'FIN'
             GROUP BY m.MATERIAL_ID, m.DESCRIPTION, m.MATERIAL_GROUP, m.CRITICALITY_SCORE
             ORDER BY IMPACT_LEVEL, m.CRITICALITY_SCORE DESC
