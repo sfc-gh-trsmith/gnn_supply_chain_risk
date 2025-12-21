@@ -13,6 +13,7 @@
 - [The Business Problem](#the-business-problem)
 - [The Solution](#the-solution)
 - [Architecture](#architecture)
+- [Dashboard Preview](#dashboard-preview)
 - [Prerequisites](#prerequisites)
 - [Repository Structure](#repository-structure)
 - [Deployment](#deployment)
@@ -131,21 +132,36 @@ flowchart TB
 
 ---
 
+## Dashboard Preview
+
+The Streamlit dashboard provides 8 interactive pages for exploring supply chain risk:
+
+| Dashboard | Description |
+|-----------|-------------|
+| **Executive Summary** | Portfolio health scores, risk distribution, and strategic KPIs |
+| **Supply Network** | Interactive graph visualization of multi-tier supplier relationships |
+| **Tier-2 Analysis** | GNN-predicted hidden links and bottleneck analysis |
+| **Scenario Simulator** | What-if analysis for disruption scenarios |
+
+> 📊 See `solution_presentation/` for architecture diagrams and detailed screenshots.
+
+---
+
 ## Prerequisites
 
 ### Snowflake Account Requirements
 
 - **Snowflake Account** with ACCOUNTADMIN access (for initial setup)
 - **Snowpark Container Services** enabled (for GPU notebooks)
-- **Cortex LLM** access (optional, for AI-assisted analysis)
+- **Cortex LLM** access (optional, for AI-assisted risk narratives in the dashboard)
 
 ### Local Development Tools
 
 ```bash
-# Install Snowflake CLI
+# Install Snowflake CLI (requires Python 3.10+)
 pip install snowflake-cli
 
-# Verify installation
+# Verify installation (tested with v3.0+)
 snow --version
 
 # Configure connection (run once)
@@ -184,6 +200,7 @@ gnn_supply_chain_risk/
 │   ├── snowflake.yml         # Streamlit deployment config
 │   ├── environment.yml       # Streamlit conda environment
 │   ├── streamlit_app.py      # Main dashboard (Home page)
+│   ├── assets/               # Static assets (GeoJSON for maps)
 │   ├── pages/                # Multi-page app
 │   │   ├── 1_Executive_Summary.py
 │   │   ├── 2_Exploratory_Analysis.py
@@ -194,6 +211,9 @@ gnn_supply_chain_risk/
 │   │   ├── 7_Risk_Mitigation.py
 │   │   └── 8_About.py
 │   └── utils/                # Shared utilities
+│       ├── data_loader.py    # Snowflake data access functions
+│       ├── risk_narratives.py # AI-generated risk explanations
+│       └── sidebar.py        # Common sidebar components
 │
 ├── data/synthetic/           # Pre-generated demo data (deterministic)
 │   ├── vendors.csv
@@ -206,7 +226,14 @@ gnn_supply_chain_risk/
 ├── utils/
 │   └── generate_synthetic_data.py  # Data generation script (already run)
 │
-├── DRD.md                    # Demo Requirements Document (design reference)
+├── docs/
+│   └── FULL_TEST_CYCLE_GUIDE.md  # Testing procedures
+│
+├── solution_presentation/    # Presentation materials
+│   ├── images/               # Architecture diagrams and screenshots
+│   └── Supply_Chain_Risk_Intelligence.pdf
+│
+├── DRD.md                    # Original requirements document for the demo
 ├── LICENSE                   # MIT License
 └── README.md                 # This file
 ```
@@ -219,15 +246,22 @@ gnn_supply_chain_risk/
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone git@github.com:sfc-gh-trsmith/gnn_supply_chain_risk.git
 cd gnn_supply_chain_risk
 
-# Deploy to Snowflake (creates all resources)
+# Deploy to Snowflake (creates all resources) - ~5 minutes
 ./deploy.sh
 
-# Or with a specific connection
-./deploy.sh -c my_connection
+# Execute GNN notebook - ~10-15 minutes (includes compute pool startup)
+./run.sh main
+
+# Get Streamlit dashboard URL
+./run.sh streamlit
 ```
+
+> **⏱️ Time Estimates:** Initial deployment takes ~5 minutes. First notebook run takes ~10-15 minutes (compute pool cold start adds ~3-5 minutes). Subsequent runs complete in ~5 minutes.
+
+> **💰 Credit Usage:** This demo uses a GPU compute pool (`GPU_NV_S`) which consumes approximately 2-3 credits per hour of notebook execution. The SMALL warehouse used for queries consumes minimal credits.
 
 ### Deployment Options
 
@@ -269,7 +303,7 @@ cd gnn_supply_chain_risk
 
 ### Step 1: Execute the GNN Notebook
 
-The notebook trains the Graph Neural Network and writes results to Snowflake tables:
+The notebook trains the Graph Neural Network and writes results to Snowflake tables (~10-15 minutes on first run):
 
 ```bash
 # Execute the notebook
@@ -419,7 +453,8 @@ export SNOWFLAKE_PRIVATE_KEY_PASSPHRASE='your_passphrase'
 # Check compute pool status
 snow sql -c demo -q "SHOW COMPUTE POOLS LIKE 'GNN_SUPPLY_CHAIN_RISK%';"
 
-# Compute pools may take 2-5 minutes to start on first use
+# Compute pools may take 3-5 minutes to start on first use
+# GPU pools (GPU_NV_S) require Snowpark Container Services to be enabled
 ```
 
 ### Notebook Execution Fails
@@ -443,11 +478,20 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
+## Technical Notes
+
+- **Notebook Runtime:** Python 3.11 with PyTorch Geometric on Snowflake GPU notebooks
+- **Graph Model:** Heterogeneous GraphSAGE with 2-hop message passing
+- **Link Prediction:** Binary classification for inferring Tier-2+ supplier relationships
+- **Risk Propagation:** PageRank-style algorithm with regional risk factor weighting
+
+---
+
 ## Acknowledgments
 
 - **PyTorch Geometric** - Graph Neural Network library
 - **Snowflake** - Data Cloud platform
-- **GraphSAGE** - Inductive representation learning on large graphs
+- **GraphSAGE** - Inductive representation learning on large graphs (Hamilton et al., 2017)
 
 ---
 

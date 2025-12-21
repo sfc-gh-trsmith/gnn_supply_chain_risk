@@ -49,18 +49,14 @@ This solution transforms supply chain management from reactive response to proac
 
 ## The Data (At a Glance)
 
-The solution fuses two data streams into a knowledge graph that reveals what your ERP cannot see.
+The solution fuses internal ERP data with external trade intelligence into a knowledge graph that reveals what your ERP cannot see.
 
 ![Data Architecture](images/data_architecture.svg)
 *Internal ERP data forms the backbone; external trade intelligence fills in the hidden Tier-2+ relationships.*
 
-- **Domains.** Vendors (Tier-1 suppliers), Materials (parts and BOMs), Regions (geographic risk factors), Trade Data (bills of lading linking shippers to consignees).
-
-- **Freshness.** Batch ingestion for ERP data; continuous refresh for trade intelligence via Snowflake Marketplace. Risk scores update when the GNN notebook executes.
-
-- **Trust.** All data stays within Snowflake's governance boundary. Role-based access controls protect sensitive supplier financials and trade patterns.
-
-- **Production-ready enrichment.** See [Snowflake Marketplace: Real-World Data Integration](#snowflake-marketplace-real-world-data-integration) below for specific data providers that power the Tier-2+ inference engine.
+- **Domains:** Vendors (Tier-1 suppliers), Materials (parts and BOMs), Regions (geographic risk factors), Trade Data (bills of lading linking shippers to consignees).
+- **Freshness:** Batch ingestion for ERP data; continuous refresh for trade intelligence via Snowflake Marketplace.
+- **Trust:** All data stays within Snowflake's governance boundary with role-based access controls.
 
 | Data Source | Type | Purpose |
 |-------------|------|---------|
@@ -69,6 +65,8 @@ The solution fuses two data streams into a knowledge graph that reveals what you
 | Bill of Materials (ERP) | Internal | Product assembly hierarchy |
 | Trade Data (External) | Enrichment | Hidden Tier-2+ relationship inference |
 | Regional Risk (External) | Enrichment | Geopolitical and disaster risk factors |
+
+See [Snowflake Marketplace: Real-World Data Integration](#snowflake-marketplace-real-world-data-integration) for production data providers.
 
 ---
 
@@ -169,26 +167,18 @@ Traditional analytics show a diversified supply base. Graph intelligence reveals
 
 ## Dashboard Experience
 
-The Streamlit application guides users from executive summary to detailed analysis.
+The Streamlit application guides users from executive summary to prioritized actions.
 
-### Home — Executive Overview
-Key metrics at a glance: nodes analyzed, critical risks identified, bottlenecks discovered, and hidden links inferred.
+| View | What You See |
+|------|--------------|
+| **Home** | Key metrics: nodes analyzed, critical risks, bottlenecks discovered |
+| **Supply Network** | Interactive graph to filter, zoom, and trace dependency paths |
+| **Tier-2 Analysis** | Predicted links, probability scores, and concentration impacts |
+| **Risk Mitigation** | Prioritized actions ranked by impact with AI-assisted context |
 
 ![Home Dashboard](images/dashboard_home.png)
-
-### Supply Network — Interactive Graph
-Explore the multi-tier supply network. Filter by node type, zoom into relationships, and trace dependency paths.
-
 ![Supply Network Graph](images/dashboard_network.png)
-
-### Tier-2 Analysis — Concentration Deep Dive
-Examine predicted Tier-2+ links, probability scores, and the suppliers most affected by hidden dependencies.
-
 ![Tier-2 Analysis](images/dashboard_tier2.png)
-
-### Risk Mitigation — Prioritized Actions
-Action items ranked by impact and probability. AI-assisted analysis provides context for deeper investigation.
-
 ![Risk Mitigation](images/dashboard_mitigation.png)
 
 ---
@@ -246,27 +236,6 @@ Action items ranked by impact and probability. AI-assisted analysis provides con
   - [FactSet](https://app.snowflake.com/marketplace/providers/GZT0Z28ANYN/FactSet) — Entity resolution and corporate linkages
   - [Resilinc EventWatch](https://app.snowflake.com/marketplace/listing/GZSTZO0V7VR/) — Real-time disruption monitoring
 - Schedule a working session to design a proof-of-concept with your critical materials
-
----
-
-## Image Index
-
-The following images should be added to the `solution_presentation/images/` directory:
-
-| Filename | Description |
-|----------|-------------|
-| `tier_visibility_gap.svg` | Diagram showing visibility ending at Tier-1 with hidden Tier-2/3 suppliers |
-| `data_architecture.svg` | Data flow from ERP + Trade sources to Knowledge Graph |
-| `marketplace_integration.svg` | How Marketplace providers (Panjiva, TradePrism, FactSet, Resilinc) connect to the knowledge graph |
-| `solution_flow.svg` | 5-step pipeline: Ingest → Build → Infer → Propagate → Visualize |
-| `concentration_alert.svg` | Radial graph showing multiple Tier-1 suppliers connected to one Tier-2 bottleneck |
-| `dashboard_home.png` | Screenshot of the Streamlit Home page with key metrics |
-| `dashboard_network.png` | Screenshot of the interactive Supply Network visualization |
-| `dashboard_tier2.png` | Screenshot of the Tier-2 Analysis page |
-| `dashboard_mitigation.png` | Screenshot of the Risk Mitigation prioritization view |
-| `technology_stack.svg` | Visual of the Snowflake + PyG + Streamlit stack |
-
----
 
 <p align="center">
 Built with ❄️ Snowflake &nbsp;|&nbsp; 🔗 PyTorch Geometric &nbsp;|&nbsp; 🎨 Streamlit

@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 420">
+  <defs>
+    <style>
+      .text { font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+      .header { font-size: 18px; font-weight: bold; fill: #1e293b; }
+      .label { font-size: 14px; fill: #334155; }
+      .sublabel { font-size: 11px; fill: #64748b; }
+      .provider { font-size: 12px; font-weight: 600; }
+      .box { fill: white; stroke: #cbd5e1; stroke-width: 2; rx: 6; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.05)); }
+      .arrow { stroke: #64748b; stroke-width: 2; marker-end: url(#arrowhead); fill: none; }
+      .flow-arrow { stroke: #3b82f6; stroke-width: 2; marker-end: url(#bluearrow); fill: none; stroke-dasharray: 6,3; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#64748b" />
+    </marker>
+    <marker id="bluearrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#3b82f6" />
+    </marker>
+  </defs>
+
+  <!-- Snowflake Marketplace Box -->
+  <rect x="20" y="20" width="280" height="380" fill="#f0f9ff" stroke="#0ea5e9" stroke-width="2" rx="10" />
+  <text x="160" y="50" text-anchor="middle" class="text header" fill="#0369a1">Snowflake Marketplace</text>
+
+  <!-- Provider 1: Panjiva -->
+  <rect x="40" y="70" width="240" height="60" class="box" style="stroke: #6366f1;" />
+  <text x="160" y="92" text-anchor="middle" class="text provider" fill="#4f46e5">S&amp;P Global Panjiva</text>
+  <text x="160" y="112" text-anchor="middle" class="text sublabel">Bills of Lading • Trade Flows</text>
+
+  <!-- Provider 2: TradePrism -->
+  <rect x="40" y="145" width="240" height="60" class="box" style="stroke: #f59e0b;" />
+  <text x="160" y="167" text-anchor="middle" class="text provider" fill="#d97706">Oxford Economics TradePrism</text>
+  <text x="160" y="187" text-anchor="middle" class="text sublabel">Forecasts • Tariffs • Sanctions</text>
+
+  <!-- Provider 3: FactSet -->
+  <rect x="40" y="220" width="240" height="60" class="box" style="stroke: #10b981;" />
+  <text x="160" y="242" text-anchor="middle" class="text provider" fill="#059669">FactSet Entity Data</text>
+  <text x="160" y="262" text-anchor="middle" class="text sublabel">Entity Resolution • Corporate Hierarchy</text>
+
+  <!-- Provider 4: Resilinc -->
+  <rect x="40" y="295" width="240" height="60" class="box" style="stroke: #ef4444;" />
+  <text x="160" y="317" text-anchor="middle" class="text provider" fill="#dc2626">Resilinc EventWatch AI</text>
+  <text x="160" y="337" text-anchor="middle" class="text sublabel">Real-time Disruption Signals</text>
+
+  <!-- Flow Arrows from Marketplace -->
+  <path d="M 280 100 L 380 160" class="flow-arrow" />
+  <path d="M 280 175 L 380 190" class="flow-arrow" />
+  <path d="M 280 250 L 380 220" class="flow-arrow" />
+  <path d="M 280 325 L 380 260" class="flow-arrow" />
+
+  <!-- Knowledge Graph -->
+  <rect x="380" y="80" width="200" height="260" fill="#faf5ff" stroke="#8b5cf6" stroke-width="2" rx="10" />
+  <text x="480" y="110" text-anchor="middle" class="text header" fill="#7c3aed">Knowledge Graph</text>
+
+  <!-- Graph Nodes -->
+  <circle cx="430" cy="170" r="22" fill="#bfdbfe" stroke="#3b82f6" stroke-width="2" />
+  <text x="430" y="175" text-anchor="middle" class="text" style="font-size: 11px; font-weight: bold;">Vendor</text>
+
+  <circle cx="530" cy="170" r="22" fill="#bbf7d0" stroke="#22c55e" stroke-width="2" />
+  <text x="530" y="175" text-anchor="middle" class="text" style="font-size: 11px; font-weight: bold;">Part</text>
+
+  <circle cx="430" cy="260" r="22" fill="#fecaca" stroke="#ef4444" stroke-width="2" />
+  <text x="430" y="265" text-anchor="middle" class="text" style="font-size: 11px; font-weight: bold;">Region</text>
+
+  <circle cx="530" cy="260" r="22" fill="#fef3c7" stroke="#f59e0b" stroke-width="2" />
+  <text x="530" y="265" text-anchor="middle" class="text" style="font-size: 11px; font-weight: bold;">Trade</text>
+
+  <!-- Edges -->
+  <line x1="452" y1="170" x2="508" y2="170" stroke="#94a3b8" stroke-width="2" />
+  <line x1="430" y1="192" x2="430" y2="238" stroke="#94a3b8" stroke-width="2" />
+  <line x1="452" y1="260" x2="508" y2="260" stroke="#94a3b8" stroke-width="2" />
+  <line x1="530" y1="192" x2="530" y2="238" stroke="#94a3b8" stroke-width="2" />
+  <line x1="448" y1="182" x2="512" y2="248" stroke="#94a3b8" stroke-width="2" />
+
+  <text x="480" y="315" text-anchor="middle" class="text sublabel">Enriched Node Features</text>
+  <text x="480" y="330" text-anchor="middle" class="text sublabel">+ Inferred Edges</text>
+
+  <!-- Arrow to Output -->
+  <path d="M 580 210 L 640 210" class="arrow" />
+
+  <!-- Output Box -->
+  <rect x="640" y="100" width="190" height="220" class="box" style="stroke: #10b981;" />
+  <text x="735" y="130" text-anchor="middle" class="text header" fill="#059669">Risk Intelligence</text>
+
+  <rect x="660" y="150" width="150" height="35" fill="#ecfdf5" stroke="none" rx="4"/>
+  <text x="735" y="172" text-anchor="middle" class="text label">Tier-2+ Link Predictions</text>
+
+  <rect x="660" y="195" width="150" height="35" fill="#ecfdf5" stroke="none" rx="4"/>
+  <text x="735" y="217" text-anchor="middle" class="text label">Concentration Alerts</text>
+
+  <rect x="660" y="240" width="150" height="35" fill="#ecfdf5" stroke="none" rx="4"/>
+  <text x="735" y="262" text-anchor="middle" class="text label">Propagated Risk Scores</text>
+
+  <rect x="660" y="285" width="150" height="25" fill="#fef3c7" stroke="none" rx="4"/>
+  <text x="735" y="302" text-anchor="middle" class="text sublabel">Real-time Event Updates</text>
+
+</svg>
+
