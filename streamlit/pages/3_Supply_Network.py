@@ -276,12 +276,12 @@ def load_bom_hierarchy(_session):
     """Load BOM data as hierarchical structure."""
     try:
         # First check if we have BOM data
-        count_result = _session.sql("SELECT COUNT(*) as CNT FROM BILL_OF_MATERIALS").to_pandas()
+        count_result = _session.sql(f"SELECT COUNT(*) as CNT FROM {DB_SCHEMA}.BILL_OF_MATERIALS").to_pandas()
         if count_result['CNT'].iloc[0] == 0:
             return None
         
-        bom = _session.sql("""
-            SELECT 
+        bom = _session.sql(f"""
+            SELECT DISTINCT
                 bom.PARENT_MATERIAL_ID,
                 pm.DESCRIPTION as PARENT_DESC,
                 pm.MATERIAL_GROUP as PARENT_GROUP,
@@ -289,9 +289,9 @@ def load_bom_hierarchy(_session):
                 cm.DESCRIPTION as CHILD_DESC,
                 cm.MATERIAL_GROUP as CHILD_GROUP,
                 bom.QUANTITY_PER_UNIT
-            FROM BILL_OF_MATERIALS bom
-            LEFT JOIN MATERIALS pm ON bom.PARENT_MATERIAL_ID = pm.MATERIAL_ID
-            LEFT JOIN MATERIALS cm ON bom.CHILD_MATERIAL_ID = cm.MATERIAL_ID
+            FROM {DB_SCHEMA}.BILL_OF_MATERIALS bom
+            LEFT JOIN {DB_SCHEMA}.MATERIALS pm ON bom.PARENT_MATERIAL_ID = pm.MATERIAL_ID
+            LEFT JOIN {DB_SCHEMA}.MATERIALS cm ON bom.CHILD_MATERIAL_ID = cm.MATERIAL_ID
         """).to_pandas()
         
         if bom.empty:
