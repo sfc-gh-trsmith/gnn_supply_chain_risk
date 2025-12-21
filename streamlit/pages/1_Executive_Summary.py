@@ -430,58 +430,63 @@ def render_regional_heatmap(regional_data, height=350):
     st.plotly_chart(fig, use_container_width=True, key="regional_heatmap")
 
 
-def render_risk_distribution_donut(metrics, height=280):
-    """Render risk category distribution as donut chart."""
+def render_risk_distribution_bar(metrics, height=280):
+    """Render risk category distribution as horizontal bar chart."""
     
     risk_summary = metrics.get('risk_summary')
     if risk_summary is None or risk_summary.empty:
         st.info("No risk data available.")
         return
     
-    labels = ['Critical', 'High', 'Medium', 'Low']
+    # Order from most severe to least severe (top to bottom)
+    labels = ['Low', 'Medium', 'High', 'Critical']
     values = [
-        int(risk_summary['CRITICAL_COUNT'].iloc[0] or 0),
-        int(risk_summary['HIGH_COUNT'].iloc[0] or 0),
+        int(risk_summary['LOW_COUNT'].iloc[0] or 0),
         int(risk_summary['MEDIUM_COUNT'].iloc[0] or 0),
-        int(risk_summary['LOW_COUNT'].iloc[0] or 0)
+        int(risk_summary['HIGH_COUNT'].iloc[0] or 0),
+        int(risk_summary['CRITICAL_COUNT'].iloc[0] or 0)
     ]
-    colors = ['#dc2626', '#ea580c', '#f59e0b', '#10b981']
-    
-    fig = go.Figure(data=[go.Pie(
-        labels=labels,
-        values=values,
-        hole=0.6,
-        marker=dict(colors=colors, line=dict(color='#0f172a', width=2)),
-        textinfo='percent',
-        textfont=dict(color='white', size=12),
-        hovertemplate="<b>%{label}</b><br>Count: %{value}<br>%{percent}<extra></extra>"
-    )])
+    colors = ['#10b981', '#f59e0b', '#ea580c', '#dc2626']
     
     total = sum(values)
+    
+    fig = go.Figure()
+    
+    for i, (label, value, color) in enumerate(zip(labels, values, colors)):
+        pct = (value / total * 100) if total > 0 else 0
+        fig.add_trace(go.Bar(
+            y=[label],
+            x=[value],
+            orientation='h',
+            marker=dict(color=color, line=dict(color='#0f172a', width=1)),
+            text=f"{value} ({pct:.0f}%)",
+            textposition='auto',
+            textfont=dict(color='white', size=11),
+            hovertemplate=f"<b>{label}</b><br>Count: {value}<br>{pct:.1f}%<extra></extra>",
+            showlegend=False
+        ))
+    
     fig.update_layout(
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
         height=height,
-        margin=dict(l=20, r=20, t=20, b=20),
-        showlegend=True,
-        legend=dict(
-            orientation='h',
-            yanchor='bottom',
-            y=-0.15,
-            xanchor='center',
-            x=0.5,
-            font=dict(color='#e2e8f0', size=10)
+        margin=dict(l=10, r=10, t=10, b=30),
+        xaxis=dict(
+            showgrid=True,
+            gridcolor='rgba(148, 163, 184, 0.1)',
+            zeroline=False,
+            title=dict(text=f"Supplier Count (n={total})", font=dict(color='#94a3b8', size=10)),
+            tickfont=dict(color='#94a3b8', size=10)
         ),
-        annotations=[dict(
-            text=f"<b>{total}</b><br>Total",
-            x=0.5, y=0.5,
-            font_size=16,
-            font_color='#f8fafc',
-            showarrow=False
-        )]
+        yaxis=dict(
+            showgrid=False,
+            tickfont=dict(color='#e2e8f0', size=11)
+        ),
+        barmode='group',
+        bargap=0.3
     )
     
-    st.plotly_chart(fig, use_container_width=True, key="risk_donut")
+    st.plotly_chart(fig, use_container_width=True, key="risk_bar")
 
 
 def main():
@@ -616,7 +621,7 @@ def main():
     
     with col2:
         st.markdown("### Risk Distribution")
-        render_risk_distribution_donut(metrics, height=250)
+        render_risk_distribution_bar(metrics, height=250)
     
     with col3:
         st.markdown("### Quick Insights")
@@ -719,105 +724,104 @@ def main():
     st.markdown('<div class="section-header">ROI Calculator</div>', unsafe_allow_html=True)
     st.markdown("Estimate the value of proactive supply chain risk management")
     
-    with st.expander("Calculate Your Potential Savings", expanded=False):
-        calc_col1, calc_col2 = st.columns(2)
+    calc_col1, calc_col2 = st.columns(2)
+    
+    with calc_col1:
+        st.markdown("#### Input Your Parameters")
         
-        with calc_col1:
-            st.markdown("#### Input Your Parameters")
-            
-            avg_disruption_cost = st.number_input(
-                "Average cost per supply disruption ($)",
-                min_value=10000,
-                max_value=50000000,
-                value=500000,
-                step=50000,
-                help="Include production delays, expedited shipping, lost sales, etc."
-            )
-            
-            disruptions_per_year = st.slider(
-                "Estimated disruptions per year (without visibility)",
-                min_value=1,
-                max_value=20,
-                value=4,
-                help="How many supply disruptions typically occur annually"
-            )
-            
-            reduction_rate = st.slider(
-                "Expected disruption reduction with proactive monitoring (%)",
-                min_value=10,
-                max_value=80,
-                value=40,
-                help="Industry benchmarks suggest 30-50% reduction with early warning systems"
-            )
-            
-            time_saved_hours = st.number_input(
-                "Hours saved per risk assessment",
-                min_value=1,
-                max_value=200,
-                value=40,
-                help="Manual supplier due diligence vs. automated analysis"
-            )
-            
-            hourly_rate = st.number_input(
-                "Average analyst hourly rate ($)",
-                min_value=25,
-                max_value=500,
-                value=150,
-                step=25
-            )
+        avg_disruption_cost = st.number_input(
+            "Average cost per supply disruption ($)",
+            min_value=10000,
+            max_value=50000000,
+            value=500000,
+            step=50000,
+            help="Include production delays, expedited shipping, lost sales, etc."
+        )
         
-        with calc_col2:
-            st.markdown("#### Estimated Annual Value")
-            
-            # Calculate values
-            disruptions_prevented = disruptions_per_year * (reduction_rate / 100)
-            disruption_savings = disruptions_prevented * avg_disruption_cost
-            
-            # Assume 12 major risk assessments per year
-            assessments_per_year = 12
-            time_savings_value = time_saved_hours * hourly_rate * assessments_per_year
-            
-            total_value = disruption_savings + time_savings_value
-            
-            st.markdown(f"""
-            <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;">
-                <div style="color: #10b981; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 0.5rem;">Total Estimated Annual Value</div>
-                <div style="color: #f8fafc; font-size: 2.5rem; font-weight: 800;">${total_value:,.0f}</div>
+        disruptions_per_year = st.slider(
+            "Estimated disruptions per year (without visibility)",
+            min_value=1,
+            max_value=20,
+            value=4,
+            help="How many supply disruptions typically occur annually"
+        )
+        
+        reduction_rate = st.slider(
+            "Expected disruption reduction with proactive monitoring (%)",
+            min_value=10,
+            max_value=80,
+            value=40,
+            help="Industry benchmarks suggest 30-50% reduction with early warning systems"
+        )
+        
+        time_saved_hours = st.number_input(
+            "Hours saved per risk assessment",
+            min_value=1,
+            max_value=200,
+            value=40,
+            help="Manual supplier due diligence vs. automated analysis"
+        )
+        
+        hourly_rate = st.number_input(
+            "Average analyst hourly rate ($)",
+            min_value=25,
+            max_value=500,
+            value=150,
+            step=25
+        )
+    
+    with calc_col2:
+        st.markdown("#### Estimated Annual Value")
+        
+        # Calculate values
+        disruptions_prevented = disruptions_per_year * (reduction_rate / 100)
+        disruption_savings = disruptions_prevented * avg_disruption_cost
+        
+        # Assume 12 major risk assessments per year
+        assessments_per_year = 12
+        time_savings_value = time_saved_hours * hourly_rate * assessments_per_year
+        
+        total_value = disruption_savings + time_savings_value
+        
+        st.markdown(f"""
+        <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;">
+            <div style="color: #10b981; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 0.5rem;">Total Estimated Annual Value</div>
+            <div style="color: #f8fafc; font-size: 2.5rem; font-weight: 800;">${total_value:,.0f}</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown(f"""
+        <div style="background: rgba(30, 41, 59, 0.8); border-radius: 8px; padding: 1rem; margin-bottom: 0.5rem;">
+            <div style="display: flex; justify-content: space-between;">
+                <span style="color: #94a3b8;">Disruption Cost Avoidance</span>
+                <span style="color: #f8fafc; font-weight: 600;">${disruption_savings:,.0f}</span>
             </div>
-            """, unsafe_allow_html=True)
-            
-            st.markdown(f"""
-            <div style="background: rgba(30, 41, 59, 0.8); border-radius: 8px; padding: 1rem; margin-bottom: 0.5rem;">
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="color: #94a3b8;">Disruption Cost Avoidance</span>
-                    <span style="color: #f8fafc; font-weight: 600;">${disruption_savings:,.0f}</span>
-                </div>
-                <div style="color: #64748b; font-size: 0.8rem; margin-top: 0.25rem;">
-                    {disruptions_prevented:.1f} disruptions prevented × ${avg_disruption_cost:,.0f}
-                </div>
+            <div style="color: #64748b; font-size: 0.8rem; margin-top: 0.25rem;">
+                {disruptions_prevented:.1f} disruptions prevented × ${avg_disruption_cost:,.0f}
             </div>
-            """, unsafe_allow_html=True)
-            
-            st.markdown(f"""
-            <div style="background: rgba(30, 41, 59, 0.8); border-radius: 8px; padding: 1rem; margin-bottom: 0.5rem;">
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="color: #94a3b8;">Time Savings Value</span>
-                    <span style="color: #f8fafc; font-weight: 600;">${time_savings_value:,.0f}</span>
-                </div>
-                <div style="color: #64748b; font-size: 0.8rem; margin-top: 0.25rem;">
-                    {time_saved_hours}h × ${hourly_rate}/h × {assessments_per_year} assessments/year
-                </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown(f"""
+        <div style="background: rgba(30, 41, 59, 0.8); border-radius: 8px; padding: 1rem; margin-bottom: 0.5rem;">
+            <div style="display: flex; justify-content: space-between;">
+                <span style="color: #94a3b8;">Time Savings Value</span>
+                <span style="color: #f8fafc; font-weight: 600;">${time_savings_value:,.0f}</span>
             </div>
-            """, unsafe_allow_html=True)
-            
-            # Additional benefits
-            st.markdown("#### Additional Strategic Benefits")
-            st.markdown("""
-            - **Compliance Risk Reduction** — Avoid regulatory penalties from supply chain traceability requirements
-            - **Negotiating Leverage** — Use visibility data to negotiate better terms with suppliers
-            - **Insurance Premium Reduction** — Demonstrate proactive risk management to reduce premiums
-            - **Competitive Advantage** — Faster response to market disruptions than competitors
-            """)
+            <div style="color: #64748b; font-size: 0.8rem; margin-top: 0.25rem;">
+                {time_saved_hours}h × ${hourly_rate}/h × {assessments_per_year} assessments/year
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Additional benefits
+        st.markdown("#### Additional Strategic Benefits")
+        st.markdown("""
+        - **Compliance Risk Reduction** — Avoid regulatory penalties from supply chain traceability requirements
+        - **Negotiating Leverage** — Use visibility data to negotiate better terms with suppliers
+        - **Insurance Premium Reduction** — Demonstrate proactive risk management to reduce premiums
+        - **Competitive Advantage** — Faster response to market disruptions than competitors
+        """)
     
     st.divider()
     

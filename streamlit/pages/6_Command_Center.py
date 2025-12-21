@@ -338,9 +338,9 @@ def load_active_alerts(_session):
 def load_alert_summary(_session):
     """Load summary counts for alert categories."""
     queries = {
-        'critical_count': f"SELECT COUNT(*) as CNT FROM {DB_SCHEMA}.RISK_SCORES WHERE RISK_CATEGORY = 'CRITICAL'",
-        'high_count': f"SELECT COUNT(*) as CNT FROM {DB_SCHEMA}.RISK_SCORES WHERE RISK_CATEGORY = 'HIGH'",
-        'medium_count': f"SELECT COUNT(*) as CNT FROM {DB_SCHEMA}.RISK_SCORES WHERE RISK_CATEGORY = 'MEDIUM'",
+        'critical_count': f"SELECT COUNT(*) as CNT FROM {DB_SCHEMA}.RISK_SCORES WHERE RISK_CATEGORY = 'CRITICAL' AND NODE_TYPE = 'SUPPLIER'",
+        'high_count': f"SELECT COUNT(*) as CNT FROM {DB_SCHEMA}.RISK_SCORES WHERE RISK_CATEGORY = 'HIGH' AND NODE_TYPE = 'SUPPLIER'",
+        'medium_count': f"SELECT COUNT(*) as CNT FROM {DB_SCHEMA}.RISK_SCORES WHERE RISK_CATEGORY = 'MEDIUM' AND NODE_TYPE = 'SUPPLIER'",
         'bottleneck_count': f"SELECT COUNT(*) as CNT FROM {DB_SCHEMA}.BOTTLENECKS WHERE IMPACT_SCORE >= 0.5"
     }
     
@@ -369,7 +369,7 @@ def load_watchlist_suppliers(_session):
                 v.FINANCIAL_HEALTH_SCORE,
                 rs.RISK_SCORE,
                 rs.RISK_CATEGORY,
-                rs.UPDATED_AT
+                rs.calculated_at as UPDATED_AT
             FROM {DB_SCHEMA}.RISK_SCORES rs
             JOIN {DB_SCHEMA}.VENDORS v ON rs.NODE_ID = v.VENDOR_ID
             WHERE rs.RISK_CATEGORY IN ('CRITICAL', 'HIGH', 'MEDIUM')
