@@ -120,6 +120,7 @@ echo "Resources to be deleted:"
 echo "  - Compute Pool: $COMPUTE_POOL"
 echo "  - Warehouse: $WAREHOUSE"
 echo "  - Database: $DATABASE (includes all tables, stages, notebooks, apps)"
+echo "  - Cortex Agent: SUPPLY_CHAIN_RISK_AGENT"
 echo "  - Role: $ROLE"
 echo "  - Network Rule: ${NETWORK_RULE}"
 echo "  - External Access: ${EXTERNAL_ACCESS}"
@@ -167,18 +168,27 @@ snow sql $SNOW_CONN -q "
 " 2>/dev/null && echo -e "${GREEN}[OK]${NC} Network rules dropped" || echo -e "${YELLOW}[WARN]${NC} Network rules not found or already dropped"
 
 ###############################################################################
-# Step 4: Drop Database (cascades to all contained objects)
+# Step 4: Drop Cortex Agent (before database)
 ###############################################################################
-echo "Step 4: Dropping database..."
+echo "Step 4: Dropping Cortex Agent..."
+snow sql $SNOW_CONN -q "
+    USE ROLE ACCOUNTADMIN;
+    DROP CORTEX AGENT IF EXISTS ${DATABASE}.${PROJECT_PREFIX}.SUPPLY_CHAIN_RISK_AGENT;
+" 2>/dev/null && echo -e "${GREEN}[OK]${NC} Cortex Agent dropped" || echo -e "${YELLOW}[WARN]${NC} Cortex Agent not found or already dropped"
+
+###############################################################################
+# Step 5: Drop Database (cascades to all contained objects)
+###############################################################################
+echo "Step 5: Dropping database..."
 snow sql $SNOW_CONN -q "
     USE ROLE ACCOUNTADMIN;
     DROP DATABASE IF EXISTS ${DATABASE};
 " 2>/dev/null && echo -e "${GREEN}[OK]${NC} Database dropped" || echo -e "${YELLOW}[WARN]${NC} Database not found or already dropped"
 
 ###############################################################################
-# Step 5: Drop Role (must be done last)
+# Step 6: Drop Role (must be done last)
 ###############################################################################
-echo "Step 5: Dropping role..."
+echo "Step 6: Dropping role..."
 snow sql $SNOW_CONN -q "
     USE ROLE ACCOUNTADMIN;
     DROP ROLE IF EXISTS ${ROLE};

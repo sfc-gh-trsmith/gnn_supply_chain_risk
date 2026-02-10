@@ -27,6 +27,7 @@ set -o pipefail
 # Configuration
 CONNECTION_NAME="demo"
 SKIP_NOTEBOOK=false
+SKIP_CORTEX=false
 ENV_PREFIX=""
 ONLY_COMPONENT=""  # Empty means deploy all
 
@@ -54,10 +55,12 @@ Options:
   -c, --connection NAME    Snowflake CLI connection name (default: demo)
   -p, --prefix PREFIX      Environment prefix for resources (e.g., DEV, PROD)
   --skip-notebook          Skip notebook deployment
+  --skip-cortex            Skip Cortex Agent and Semantic View deployment
   --only-streamlit         Deploy only the Streamlit app (skips all other steps)
   --only-notebook          Deploy only the notebook (skips all other steps)
   --only-data              Upload and load data only (skips SQL setup, notebook, streamlit)
   --only-sql               Run SQL setup only (skips data, notebook, streamlit)
+  --only-cortex            Deploy only Cortex components (UDF, semantic view, agent)
   -h, --help               Show this help message
 
 Examples:
@@ -67,6 +70,7 @@ Examples:
   $0 -c prod --prefix PROD # Production deployment with PROD_ prefix
   $0 --only-streamlit      # Redeploy only the Streamlit app
   $0 --only-notebook       # Redeploy only the notebook
+  $0 --only-cortex         # Redeploy Cortex Agent and Semantic View
 EOF
     exit 0
 }
@@ -95,6 +99,10 @@ while [[ $# -gt 0 ]]; do
             SKIP_NOTEBOOK=true
             shift
             ;;
+        --skip-cortex)
+            SKIP_CORTEX=true
+            shift
+            ;;
         --only-streamlit)
             ONLY_COMPONENT="streamlit"
             shift
@@ -109,6 +117,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --only-sql)
             ONLY_COMPONENT="sql"
+            shift
+            ;;
+        --only-cortex)
+            ONLY_COMPONENT="cortex"
             shift
             ;;
         *)
@@ -175,6 +187,9 @@ should_run_step() {
             ;;
         streamlit)
             [[ "$step_name" == "streamlit" ]]
+            ;;
+        cortex)
+            [[ "$step_name" == "cortex_udf" || "$step_name" == "semantic_view" || "$step_name" == "cortex_agent" ]]
             ;;
         *)
             return 1
@@ -455,6 +470,86 @@ else
 fi
 
 ###############################################################################
+# Step 8: Deploy Cortex UDF
+###############################################################################
+if should_run_step "cortex_udf" && [ "$SKIP_CORTEX" = false ]; then
+    echo "Step 8: Creating Cortex Risk Analysis UDF..."
+    echo "------------------------------------------------"
+
+    {
+        echo "SET PROJECT_ROLE = '${ROLE}';"
+        echo "SET FULL_PREFIX = '${FULL_PREFIX}';"
+        echo "SET PROJECT_SCHEMA = '${SCHEMA}';"
+        echo ""
+        cat sql/03_cortex_udf.sql
+    } | snow sql $SNOW_CONN -i
+
+    echo -e "${GREEN}[OK]${NC} Cortex UDF created"
+    echo ""
+elif [ "$SKIP_CORTEX" = true ]; then
+    echo "Step 8: Skipped (--skip-cortex)"
+else
+    echo "Step 8: Skipped (--only-$ONLY_COMPONENT)"
+fi
+
+###############################################################################
+# Step 9: Deploy Semantic View
+###############################################################################
+if should_run_step "semantic_view" && [ "$SKIP_CORTEX" = false ]; then
+    echo "Step 9: Deploying Semantic View..."
+    echo "------------------------------------------------"
+
+    # Create semantic models stage
+    {
+        echo "SET PROJECT_ROLE = '${ROLE}';"
+        echo "SET FULL_PREFIX = '${FULL_PREFIX}';"
+        echo "SET PROJECT_SCHEMA = '${SCHEMA}';"
+        echo ""
+        cat sql/04_semantic_view.sql
+    } | snow sql $SNOW_CONN -i
+
+    # Upload semantic model YAML
+    echo "Uploading semantic model YAML..."
+    snow sql $SNOW_CONN -q "
+        USE ROLE ${ROLE};
+        USE DATABASE ${DATABASE};
+        USE SCHEMA ${SCHEMA};
+        PUT file://semantic_models/supply_chain_risk.yaml @SEMANTIC_MODELS/ AUTO_COMPRESS=FALSE OVERWRITE=TRUE;
+    "
+
+    echo -e "${GREEN}[OK]${NC} Semantic model uploaded"
+    echo ""
+elif [ "$SKIP_CORTEX" = true ]; then
+    echo "Step 9: Skipped (--skip-cortex)"
+else
+    echo "Step 9: Skipped (--only-$ONLY_COMPONENT)"
+fi
+
+###############################################################################
+# Step 10: Deploy Cortex Agent
+###############################################################################
+if should_run_step "cortex_agent" && [ "$SKIP_CORTEX" = false ]; then
+    echo "Step 10: Creating Cortex Agent..."
+    echo "------------------------------------------------"
+
+    {
+        echo "SET PROJECT_ROLE = '${ROLE}';"
+        echo "SET FULL_PREFIX = '${FULL_PREFIX}';"
+        echo "SET PROJECT_SCHEMA = '${SCHEMA}';"
+        echo "SET PROJECT_WH = '${WAREHOUSE}';"
+        echo ""
+        cat sql/05_cortex_agent.sql
+    } | snow sql $SNOW_CONN -i
+
+    echo -e "${GREEN}[OK]${NC} Cortex Agent created"
+    echo ""
+elif [ "$SKIP_CORTEX" = true ]; then
+    echo "Step 10: Skipped (--skip-cortex)"
+else
+    echo "Step 10: Skipped (--only-$ONLY_COMPONENT)"
+fi
+
+###############################################################################
 # Summary
 ###############################################################################
 echo ""
@@ -497,5 +592,10 @@ else
     echo "  - Compute Pool: $COMPUTE_POOL"
     echo "  - Notebook: ${NOTEBOOK_NAME}"
     echo "  - Streamlit App: GNN_SUPPLY_CHAIN_RISK_APP"
+    if [ "$SKIP_CORTEX" = false ]; then
+        echo "  - Cortex UDF: ANALYZE_RISK_SCENARIO"
+        echo "  - Semantic Model: @SEMANTIC_MODELS/supply_chain_risk.yaml"
+        echo "  - Cortex Agent: SUPPLY_CHAIN_RISK_AGENT"
+    fi
     echo ""
 fi

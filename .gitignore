@@ -79,3 +79,10 @@ htmlcov/
 
 # Logs
 *.log
+react/frontend/node_modules/
+react/.services.pid
+react/.services.pid
+react/frontend/node_modules/
+react/frontend/dist/
+react/logs/
+react/.services.pid

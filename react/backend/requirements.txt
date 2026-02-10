@@ -1,0 +1,6 @@
+snowflake-connector-python>=3.0.0
+fastapi>=0.100.0
+uvicorn[standard]>=0.23.0
+python-multipart
+requests
+pydantic>=2.0.0

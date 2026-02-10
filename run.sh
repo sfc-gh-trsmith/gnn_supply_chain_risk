@@ -7,12 +7,14 @@
 #   status     - Check status of resources
 #   notebook   - Get notebook URL
 #   streamlit  - Get Streamlit app URL
+#   cortex     - Test the Cortex Agent
 #
 # Usage:
 #   ./run.sh main              # Execute notebook
 #   ./run.sh status            # Check resource status
 #   ./run.sh notebook          # Get notebook URL
 #   ./run.sh streamlit         # Get Streamlit URL
+#   ./run.sh cortex            # Test Cortex Agent
 #   ./run.sh -c demo  main     # Use specific connection
 #   ./run.sh --prefix DEV main # Use DEV_ prefixed resources
 ###############################################################################
@@ -50,6 +52,7 @@ Commands:
   status     Check status of Snowflake resources
   notebook   Get URL to open the notebook in Snowsight
   streamlit  Get URL to open the Streamlit dashboard
+  cortex     Test the Cortex Agent with a sample query
 
 Options:
   -c, --connection NAME    Snowflake CLI connection name (default: demo)
@@ -61,6 +64,7 @@ Examples:
   $0 status                # Check resource status
   $0 -c demo streamlit     # Get Streamlit URL using demo connection
   $0 --prefix DEV status   # Check status of DEV_ prefixed resources
+  $0 cortex                # Test Cortex Agent
 EOF
     exit 0
 }
@@ -85,7 +89,7 @@ while [[ $# -gt 0 ]]; do
             ENV_PREFIX="$2"
             shift 2
             ;;
-        main|status|notebook|streamlit)
+        main|status|notebook|streamlit|cortex)
             COMMAND="$1"
             shift
             ;;
@@ -315,6 +319,42 @@ cmd_streamlit() {
 }
 
 ###############################################################################
+# Command: cortex - Test Cortex Agent
+###############################################################################
+cmd_cortex() {
+    echo "=================================================="
+    echo "GNN Supply Chain Risk - Cortex Agent Test"
+    echo "=================================================="
+    echo ""
+    if [ -n "$ENV_PREFIX" ]; then
+        echo "Environment Prefix: $ENV_PREFIX"
+    fi
+    echo ""
+    
+    echo "Testing Cortex Agent with sample query..."
+    echo ""
+    
+    snow sql $SNOW_CONN -q "
+        USE ROLE ${ROLE};
+        USE DATABASE ${DATABASE};
+        USE SCHEMA ${SCHEMA};
+        
+        -- Test the agent with a portfolio summary
+        SELECT SNOWFLAKE.CORTEX.COMPLETE(
+            'llama3.1-70b',
+            'You are a supply chain analyst. Provide a brief risk assessment.'
+        ) as AGENT_TEST;
+    "
+    
+    echo ""
+    echo "To interact with the full Cortex Agent, use the React app:"
+    echo "  cd react && ./start.sh"
+    echo ""
+    echo "Or test the UDF directly:"
+    echo "  SELECT ANALYZE_RISK_SCENARIO('PORTFOLIO_SUMMARY', NULL, NULL, 0.5);"
+}
+
+###############################################################################
 # Execute command
 ###############################################################################
 case $COMMAND in
@@ -329,6 +369,9 @@ case $COMMAND in
         ;;
     streamlit)
         cmd_streamlit
+        ;;
+    cortex)
+        cmd_cortex
         ;;
     *)
         error_exit "Unknown command: $COMMAND"
