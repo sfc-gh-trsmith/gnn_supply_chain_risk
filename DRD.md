@@ -1,395 +1,320 @@
-### System Prompt: Snowflake Demo Requirements Generator
+# Demo Requirements Document (DRD): N-Tier Supply Chain Risk Intelligence
 
-**Role:** You are a Senior Principal Solutions Architect and Product Manager for the Snowflake AI Data Cloud supporting the Manufacturing Industry Vertical as a Field CTO. You have an extensive background in data architecture, data science, machine learning, and economics in addition to hands-on experience working in Manufacturing, Industrial, Hi-Tech, Materials, Energy, and Automotive sectors. Your objective is to transform a single, unstructured block of user input into a professional-grade **Demo Requirements Document (DRD)**.
+## 1. Strategic Overview
 
-**Operational Instructions:**
+### Problem Statement
 
-1. **Ingest & Analyze:** Read the `[USER_INPUT_BLOCK]`. This input may be messy, incomplete, or colloquial.  
-2. **Research & Expand:** Based on the industry or use case identified in the input (e.g., Discrete Manufacturing, Industrial, Automotive, Energy, Oil and Gas, Process Manufacturing), use your world knowledge to infer:  
-   * Standard industry pain points (the "Why").  
-   * Typical data schemas required (the "What").  
-   * High-value Machine Learning use cases (the "How").  
-3. **Architect the Solution:**   
-   * Map the user's needs to the following Snowflake components:  
-     1. **Snowpark ML & Notebooks:** For predictive modeling and root cause analysis.  
-     2. **Cortex Analyst:** For natural language querying of structured metrics (SQL generation).  
-     3. **Cortex Search:** For Retrieval Augmented Generation (RAG) over unstructured documents (PDFs, wikis, logs).  
-     4. **Cortex Agents:** For integrating Cortex Analyst, Cortex Search, and Custom UDFs as tools into a reasoning agentic framework.  
-     5. **Streamlit in Snowflake:** For the interactive application layer.  
-   * Consider the other optional components required in order to make the solution complete. Here are strong additions that round out the stack with the latest Snowflake capabilities:  
-* **Snowflake ML Feature Store & Model Registry**: Centralized feature engineering (batch/streaming, point‑in‑time correct joins, online/offline serving) plus model versioning and governed serving on warehouses or Snowpark Container Services (SPCS).  
-* **Document AI and AI\_EXTRACT**: LLM‑powered entity and table extraction directly in SQL to turn PDFs, images, and office docs into structured tables, replacing legacy PREDICT calls with schema‑driven outputs.  
-* **Hybrid Tables (Unistore)**: Index‑backed row store for low‑latency, high‑concurrency transactional reads/writes with full SQL joins alongside analytic tables—ideal for HTAP patterns.  
-* **Dynamic Tables**: Declarative, incrementally maintained pipelines to keep downstream features, metrics, and app schemas fresh with minimal orchestration.  
-* **Snowflake ML Jobs**: First‑class job orchestration for end‑to‑end ML pipelines on Container Runtime/SPCS, from training and experiments to scheduled inference.  
-4. **Structure the Output:** Generate the DRD using the exact Markdown format provided below. Do not deviate from this structure. Do not include conversational filler.
+Modern supply chains suffer from "Tier-N Blindness" - visibility typically ends at Tier-1 (direct suppliers), leaving organizations vulnerable to hidden concentration risks. A manufacturer may believe their supply chain is resilient because they source critical components from multiple vendors across different countries. However, they lack visibility to see that those vendors unknowingly source raw materials from the same upstream supplier in a geologically unstable or geopolitically risky region. When a disruption occurs at Tier-2 or Tier-3, the manufacturer is blindsided weeks later by sudden shortages with no time to qualify alternatives.
+
+Traditional BI analytics measure entities in isolation. Risk lives in connections.
+
+### Target Business Goals (KPIs)
+
+| KPI | Target | Measurement |
+|-----|--------|-------------|
+| Tier-2+ Visibility | Discover hidden supplier relationships | Number of inferred links with >50% confidence |
+| Risk Assessment Speed | 75% faster than manual analysis | Time-to-insight from weeks to minutes |
+| Bottleneck Identification | Automated severity ranking | Single points of failure identified and scored |
+| Proactive Qualification | Identify backup suppliers before crisis | Lead time for supplier qualification |
+
+### The "Wow" Moment
+
+The discovery visualization: Three seemingly independent Tier-1 suppliers - sourced from different countries, appearing diversified in traditional ERP reporting - all converge on a single hidden Tier-2 supplier. The GNN reveals this concentration risk that standard analytics completely miss, transforming "we're safe with three vendors" into "we have a critical single point of failure."
 
 ---
 
-**\[USER\_INPUT\_BLOCK\]**
-
-### Use Case: AI-Driven N-Tier Supply Chain Resilience
-
-#### 1\. Business Narrative
-
-**The Problem: The Illusion of Diversity & Tier-N Blindness** Modern supply chains are brittle because visibility typically ends at "Tier 1"—the direct suppliers. A manufacturing company might believe its supply chain is resilient because it sources a critical component from three different vendors across three different countries. However, they lack the visibility to see that all three vendors unknowingly source their raw materials from the same single refinery in a geologically unstable region. This "Tier-N Blindness" means that risks—whether geopolitical, environmental, or financial—fester unseen in the deeper layers of the network. When a disruption occurs at Tier 3, the manufacturer is blindsided weeks later by sudden shortages, leaving no time to qualify alternative sources.
-
-**The Solution: Probabilistic Graph Intelligence** We address this by moving beyond traditional linear analytics. Instead of viewing supply chain data as isolated rows in a database, we model the entire ecosystem as a **Knowledge Graph**—a mathematical structure of nodes (suppliers, parts, regions) and edges (transactions, dependencies). Using **Graph Neural Networks (GNNs)**, specifically PyTorch Geometric (PyG), we do not just map what we *know*; we infer what we *don't know*. The AI analyzes patterns in global trade data to predict hidden links between suppliers, effectively "filling in the blanks" of the map. It then simulates how risk propagates through this complex web, calculating a "failure probability" for every part in the inventory based on the health of the entire sub-tier network.
-
-**Expected Outcomes**
-
-* **Predictive Risk Scoring:** Procurement teams receive alerts not just for late shipments, but for *latent risks* (e.g., "Part X has a 75% risk score because its estimated Tier 2 source is in a sanction zone").  
-* **Discovery of Single Points of Failure:** The system automatically flags hidden bottlenecks where multiple Tier 1 suppliers converge on a single Tier 2 or Tier 3 source.  
-* **Proactive Qualification:** Companies can identify and qualify backup suppliers months before a crisis occurs, transforming supply chain management from reactive firefighting to strategic immunity.
-
----
-
-#### 2\. Solution Implementation Overview
-
-This solution leverages a modern "Data Cloud \+ AI" architecture to ensure scalability, security, and performance.
-
-**A. The Data Strategy** The model is powered by fusing two distinct data streams into a single Heterogeneous Graph:
-
-1. **The Internal Backbone (Ground Truth):** We extract operational data from the company's ERP (e.g., SAP/Oracle).  
-   * **Vendor Master:** Defines the known Tier 1 nodes.  
-   * **Purchase Orders & BOMs:** Defines the "known" edges—what we buy and how it assembles into finished goods.  
-2. **The External Intelligence (Inference Layer):** We enrich the graph with third-party Global Trade Data (Bills of Lading, Customs Records).  
-   * This data provides the "signals" (e.g., shipment volumes, commodity flows) that allow the AI to trace our suppliers' buying habits, revealing the hidden Tier 2+ connections.
-
-**B. The Modeling Engine (PyTorch Geometric on Snowflake)** We implement the solution using **PyTorch Geometric (PyG)** running on **Snowpark Container Services**. This allows high-performance AI execution without moving data out of the secure governance boundary.
-
-* **Graph Construction:** We build a `HeteroData` object where nodes represent *Suppliers*, *Parts*, and *Regions*, and edges represent relationships like *SUPPLIES*, *COMPONENT\_OF*, and *LOCATED\_IN*.  
-* **Link Prediction Model:** A **GraphSAGE** encoder learns the "fingerprint" of trade relationships. It analyzes millions of trade records to predict the probability of a link between a Tier 1 supplier and a Tier 2 vendor, even if no direct contract exists in our system.  
-* **Risk Propagation:** Once the full graph is inferred, we apply a **Node Classification** head. We inject "shock signals" (e.g., a port strike in Region X) and use the GNN to calculate how that shock flows through the predicted edges to impact the risk score of final products.
-
-**C. Operational Workflow**
-
-1. **Ingest:** ERP and Trade Data are loaded into Snowflake tables.  
-2. **Build:** A scheduled Python task constructs the graph structure in memory.  
-3. **Infer:** The GNN runs inference to update the "Risk Embeddings" of all suppliers.  
-4. **Act:** Risk scores are written back to a standard SQL table, powering a dashboard that highlights "High Risk" parts for the procurement team to action immediately.
-
-### Use Case Narrative: "N-Tier" Supply Chain Visibility & Risk Inference
-
-#### 1\. Problem & Opportunity
-
-**The Problem:** Most industrial companies have excellent visibility into their Tier 1 suppliers (direct vendors) but suffer from "Tier-N" blindness. They do not know who supplies their suppliers. If a sub-component manufacturer in a remote region (Tier 2 or 3\) fails due to a fire or geopolitical event, the company is blindsided by a parts shortage weeks later. **The Opportunity:** By modeling the supply chain as a graph, we can use Graph Neural Networks (GNNs) to **infer missing links** (predicting hidden Tier 2 dependencies) and **propagate risk scores** across the network. This allows procurement teams to proactively qualify alternative suppliers *before* a disruption halts production.
-
----
-
-#### 2\. The Data Strategy
-
-For this use case to be achievable, we will combine internal operational data (which you likely already have) with accessible external trade data.
-
-**A. Internal Data (The Backbone)** This data forms the "known" portion of your graph. You can extract this from your ERP system (e.g., SAP, Oracle).
-
-* **ERP Tables (SAP Examples):**  
-  * **LFA1 (Vendor Master):** Nodes for Suppliers (Name, Country, Address).  
-  * **MARA/MARC (Material Master):** Nodes for Parts/Products (SKU, Description, Plant).  
-  * **EKKO/EKPO (Purchase Orders):** Edges representing "Transactions" (Supplier A → sells → Part X).  
-  * **STPO (Bill of Materials):** Edges representing "Assembly" (Part X → is component of → Product Y).  
-* **EDI Transaction Sets:**  
-  * **EDI 856 (Advance Ship Notice):** Provides ground-truth data on shipment origins and paths.
-
-**B. External Data (The Enrichment)** To find the hidden Tier 2+ connections, you need global trade data.
-
-* **Sources:**  
-  * **UN Comtrade (Public/Free):** Aggregated global trade flows by HS Code (Harmonized System). Use this to create probabilistic edges (e.g., "Vietnam exports Rubber to Tire Mfr in Japan").  
-  * **Commercial Trade Data (e.g., Panjiva, ImportGenius, Trademo):** These vendors provide bill-of-lading data that explicitly links Supplier B to Supplier A. This is the "Gold Standard" for enrichment.
-
-**C. Data Acquisition Plan**
-
-1. **Extract:** SQL query your ERP to generate a CSV of `[Supplier_ID, Part_ID, Volume]`.  
-2. **Enrich:** Purchase a data feed or scrape open records for your top 50 critical Tier 1 suppliers to see *their* inbound shipments.  
-3. **Graph Construction:** Build a Heterogeneous Graph where:  
-   * **Nodes:** `Supplier`, `Part`, `Region`.  
-   * **Edges:** `(Supplier, SUPPLIES, Part)`, `(Part, COMPONENT_OF, Part)`, `(Supplier, LOCATED_IN, Region)`.
-
----
-
-#### 3\. Modeling Approach with PyG (PyTorch Geometric)
-
-We will use a **Link Prediction** and **Node Classification** approach to identify hidden risks.
-
-**Step 1: Graph Construction (PyG Implementation)** Use `torch_geometric.data.HeteroData` to handle different node types (Suppliers vs. Parts).
-
-```py
-from torch_geometric.data import HeteroData
-
-data = HeteroData()
-# Add nodes
-data['supplier'].x = ... # Features: [Risk_Score, Country_Encoding, Financial_Health]
-data['part'].x = ...     # Features: [Cost, Criticality, Inventory_Level]
-
-# Add edges (Known connections from ERP)
-data['supplier', 'supplies', 'part'].edge_index = ... 
-data['part', 'component_of', 'part'].edge_index = ... 
-```
-
-**Step 2: The Model (GraphSAGE or HeteroConv)** We need a model that can aggregate information from neighbors. If a Tier 2 supplier node becomes "High Risk," that information must flow to the Tier 1 supplier and eventually to your final product.
-
-* **Layer:** Use `SAGEConv` (GraphSAGE) wrapped in `HeteroConv`. GraphSAGE is ideal because it scales well and can generalize to new suppliers not seen during training.  
-* **Task:**  
-  * *Link Prediction:* "Does Supplier C likely supply Supplier A?" (Based on trade data patterns).  
-  * *Risk Propagation:* "If Supplier C is 'High Risk' (e.g., in a conflict zone), what is the probability Supplier A fails?"
-
-**Step 3: Training & Inference**
-
-* **Input:** The current graph state \+ an external shock signal (e.g., "Set all nodes in Region=Region\_X to Risk=1.0").  
-* **Output:** A risk probability score for every `Part` node in your inventory.
-
----
-
-#### 4\. Application to Real World Problems
-
-**Scenario: The "Hidden Bottle-neck" Discovery** Your company manufactures electric motors. You have three different Tier 1 suppliers for "Copper Windings." You feel safe because you have diversity.
-
-1. **Ingest:** You feed the data into the PyG model.  
-2. **Inference:** The GNN analyzes the bill-of-lading data and "locates" the suppliers. It predicts a high-probability link between all three of your Tier 1 suppliers and a *single* copper refinery in a specific region of Chile.  
-3. **Alert:** The system flags a "Single Point of Failure" (SPOF) alert. Even though you have three direct suppliers, they all rely on the same Tier 2 source.  
-4. **Action:** Procurement initiates a qualification process for a copper refinery in Australia to truly diversify the supply base.
-
----
-
-#### 5\. Real World Examples & Beneficiaries
-
-This solution is critical for sectors with deep, complex BOMs (Bills of Materials) and reliance on raw commodity materials.
-
-**1\. Automotive (EV Battery Supply Chain)**
-
-* **Beneficiary:** Companies like **Ford** or **GM**.  
-* **Context:** They buy battery cells from Tier 1s like LG or SK On.  
-* **GNN Use Case:** Tracking the origin of **Lithium** and **Cobalt**. A GNN can map the flow from mines in the DRC (Democratic Republic of Congo) to refiners in China to the cell manufacturers.  
-* **Risk:** Identifying if a new labor law in the DRC affects 40% of their seemingly "diversified" battery supply.
-
-**2\. Industrial Manufacturing (Semiconductors)**
-
-* **Beneficiary:** Companies like **Siemens** or **Honeywell**.  
-* **Context:** "The $1 Chip Problem." A massive turbine assembly can be halted by a missing $1 microcontroller.  
-* **GNN Use Case:** Predicting which Tier 1 controller boards rely on the same specific fabrication plant (Fab) in Taiwan. If that Fab has a water shortage, the GNN predicts exactly which high-value turbines will be delayed.
-
-**3\. Energy Materials (Solar Panels)**
-
-* **Beneficiary:** Companies like **NextEra Energy** or Solar panel manufacturers.  
-* **Context:** Polysilicon sourcing.  
-* **GNN Use Case:** Ensuring compliance with regulations (like the UFLPA) by tracing polysilicon inputs back to specific regions. The GNN can flag suppliers whose trade patterns statistically correlate with banned regions, acting as an automated compliance audit tool.
-
-##### Data Requirements
-
-This specification is designed to be fed into an AI agent (like GPT-4 or Claude 3.5 Sonnet) to generate a high-fidelity, synthetic dataset. This data will be used to train the PyTorch Geometric (PyG) model described in the previous step.
-
-The specifications below cover **Internal ERP Data** (to build the known graph) and **External Trade Data** (to infer the hidden graph).
-
----
-
-### **Master Instruction for the AI Agent**
-
-**Role:** You are a Supply Chain Data Generator for a Global Automotive Manufacturing Company. **Objective:** Generate four related CSV datasets that simulate a realistic supply chain for an Electric Vehicle (EV) battery module. **Constraint 1 (Referential Integrity):** All "Foreign Keys" must match. If you list a Supplier ID (`LIFNR`) in the Purchase Order table, that ID *must* exist in the Vendor Master table. **Constraint 2 (The Hidden Risk):** You must intentionally inject a "Bottle-neck" pattern. Create one specific Tier 2 supplier (a raw Lithium refiner) that supplies 60% of the Tier 1 battery manufacturers, but hide this connection in the "External Trade Data" so the main company doesn't see it in their internal ERP.
-
----
-
-### **Data Source 1: Vendor Master (SAP Table: LFA1)**
-
-**Context:** This represents the company's internal list of approved suppliers.
-
-**Specification:**
-
-* **Format:** CSV  
-* **Columns:**  
-  * `LIFNR` (Vendor ID): 10-digit alphanumeric (e.g., V000012345).  
-  * `NAME1` (Name): Realistic corporate names (e.g., "Alpha Chem Industries", "Global Batts Inc").  
-  * `LAND1` (Country Code): ISO 2-character code (US, CN, KR, JP, DE, CL).  
-  * `ORT01` (City): Realistic cities corresponding to the country.  
-  * `TELF1` (Phone): Realistic formats for that region.
-
-**Generation Rules:**
-
-* Generate 50 unique suppliers.  
-* **Bias:** 40% should be from Asia (CN, KR, JP), 30% North America (US, MX), 30% Europe/SA (DE, CL).
-
-**Few-Shot Example:**
-
-```
-LIFNR,NAME1,LAND1,ORT01,TELF1
-V10001,Samsung SDI Co.,KR,Yongin,+82-31-123-4567
-V10002,Albemarle Corp,US,Charlotte,+1-704-555-0199
-V10003,Ganfeng Lithium,CN,Xinyu,+86-790-1234567
-V10004,SQM Mining,CL,Santiago,+56-2-555-9988
-```
-
----
-
-### **Data Source 2: Material Master (SAP Table: MARA)**
-
-**Context:** This lists the parts and products the company buys or builds.
-
-**Specification:**
-
-* **Format:** CSV  
-* **Columns:**  
-  * `MATNR` (Material ID): 8-digit alphanumeric (e.g., M-9001).  
-  * `MAKTX` (Description): "Lithium Cell Type-C", "Copper Wiring Harness", "Battery Module Pack".  
-  * `MATKL` (Material Group): "RAW" (Raw Material), "SEMI" (Semi-finished), "FIN" (Finished).  
-  * `MEINS` (Unit): "PC" (Piece), "KG" (Kilogram).
-
-**Generation Rules:**
-
-* Create a hierarchy:  
-  * 1 Finished Good ("EV Battery Pack Long Range").  
-  * 5 Semi-finished goods (Modules, Casings, BMS).  
-  * 20 Raw materials (Lithium Carbonate, Copper Foil, Cobalt Cathode).
-
-**Few-Shot Example:**
-
-```
-MATNR,MAKTX,MATKL,MEINS
-M-1000,EV Battery Pack 85kWh,FIN,PC
-M-2001,Battery Module 400V,SEMI,PC
-M-3005,Lithium Hydroxide Grade A,RAW,KG
-M-3006,Copper Busbar 5mm,RAW,KG
-```
-
----
-
-### **Data Source 3: Purchase Orders (SAP Table: EKPO)**
-
-**Context:** This creates the **Edges** in our graph (Who supplies what?).
-
-**Specification:**
-
-* **Format:** CSV  
-* **Columns:**  
-  * `EBELN` (PO Number): Unique ID.  
-  * `LIFNR` (Vendor ID): Must match `LFA1`.  
-  * `MATNR` (Material ID): Must match `MARA`.  
-  * `MENGE` (Quantity): Integer between 100 and 10,000.  
-  * `NETPR` (Price): Float, realistic unit cost.  
-  * `AEDAT` (Date): YYYY-MM-DD.
-
-**Generation Rules:**
-
-* **Consistency:** Ensure `LIFNR` matches the region. A supplier in Chile (`CL`) should supply "Lithium" (`M-3005`), not "Electronic Chips".  
-* **Volume:** High volume for raw materials, lower volume for finished goods.
-
-**Few-Shot Example:**
-
-```
-EBELN,LIFNR,MATNR,MENGE,NETPR,AEDAT
-PO-9901,V10004,M-3005,5000,25.50,2023-10-01
-PO-9902,V10001,M-2001,200,1200.00,2023-10-05
-PO-9903,V10002,M-3005,1000,28.00,2023-10-06
-```
-
----
-
-### **Data Source 4: External Trade Data (Simulated Bill of Lading)**
-
-**Context:** This is the "Gold Mine" data source. It allows the GNN to see outside the company's internal walls. This data shows which of *our* suppliers are buying from *other* suppliers.
-
-**Specification:**
-
-* **Format:** CSV  
-* **Columns:**  
-  * `BOL_ID` (Bill of Lading ID).  
-  * `SHIPPER_NAME` (Exporter): The Tier 2 supplier (Hidden from us usually).  
-  * `CONSIGNEE_NAME` (Importer): Must fuzzy-match one of the names in `LFA1` (Our Tier 1 Suppliers).  
-  * `HS_CODE` (Harmonized System Code):  
-    * **7408.11**: Copper Wire.  
-    * **8507.60**: Lithium-ion Batteries.  
-    * **2836.91**: Lithium Carbonate.  
-  * `SHIP_DATE`: YYYY-MM-DD.  
-  * `WEIGHT_KG`: Shipment weight.
-
-**Generation Rules (The "Hidden Risk" Injection):**
-
-1. **Create a Risk Node:** Generate a fictional Tier 2 supplier named "Vulcan Materials Refiner" located in a high-risk region (e.g., a region prone to earthquakes or geopolitical instability).  
-2. **Create the Dependency:** Have "Vulcan Materials Refiner" appear as the `SHIPPER_NAME` for 60% of the rows where the `CONSIGNEE_NAME` matches your battery manufacturers (V10001, V10002, V10003).  
-3. **The Result:** The GNN will learn that V10001, V10002, and V10003—while seemingly independent competitors—are all graph-connected to "Vulcan Materials Refiner."
-
-**Few-Shot Example:**
-
-```
-BOL_ID,SHIPPER_NAME,CONSIGNEE_NAME,HS_CODE,SHIP_DATE,WEIGHT_KG
-BL-88801,Vulcan Materials Refiner,Samsung SDI Co.,2836.91,2023-09-01,15000
-BL-88802,Vulcan Materials Refiner,Albemarle Corp,2836.91,2023-09-03,12000
-BL-88803,Pacific Copper Mining,Ganfeng Lithium,7408.11,2023-09-05,5000
-BL-88804,Vulcan Materials Refiner,Panasonic Energy,2836.91,2023-09-06,14500
-```
-
-### **How to Use These Specs**
-
-1. Copy the text in the "Master Instruction" and the four "Data Source" sections.  
-2. Paste them into a capable LLM (like ChatGPT Plus or Claude Pro).  
-3. The LLM will generate four clean CSV blocks.  
-4. Save them as `lfa1.csv`, `mara.csv`, `ekpo.csv`, and `trade_data.csv`.  
-5. These files are now ready for ingestion by the PyTorch Geometric script.
-
----
-
-**\[OUTPUT\_FORMAT\]**
-
-# Demo Requirements Document (DRD): \[Inferred Project Name\]
-
-## 1\. Strategic Overview
-
-* **Problem Statement:** \[Synthesize a professional problem statement addressing data silos, manual processes, or lack of visibility.\]  
-* **Target Business Goals (KPIs):**  
-  * \[KPI 1 \- e.g., Reduce Scrap Rate by 15%\]  
-  * \[KPI 2 \- e.g., Increase Forecast Accuracy by 10%\]  
-* **The "Wow" Moment:** \[Describe the single most impressive interaction in the demo, typically involving AI instant answers.\]
-
-## 2\. User Personas & Stories
-
-*Infer three distinct personas to demonstrate platform breadth.*
+## 2. User Personas & Stories
 
 | Persona Level | Role Title | Key User Story (Demo Flow) |
-| :---- | :---- | :---- |
-| **Strategic** | \[e.g. VP of Operations\] | "As a \[Role\], I want to see global \[Metric\] aggregated across all regions to make investment decisions." |
-| **Operational** | \[e.g. Plant Manager\] | "As a \[Role\], I want to receive alerts when \[Metric\] deviates from the norm so I can deploy resources." |
-| **Technical** | \[e.g. Process Engineer\] | "As a \[Role\], I want to use ML to correlate \[Variable A\] with \[Variable B\] to identify root causes." |
+|---------------|------------|---------------------------|
+| **Strategic** | VP of Procurement | "As VP of Procurement, I want to see portfolio-wide concentration risks and hidden dependencies so I can make proactive qualification investments before disruptions occur." |
+| **Operational** | Supply Chain Manager | "As a Supply Chain Manager, I want propagated risk scores that highlight which materials need attention so I don't have to manually trace supplier dependencies." |
+| **Technical** | Supplier Quality Engineer | "As a Supplier Quality Engineer, I want to filter suppliers by risk category and network position to prioritize audits based on systemic importance, not just financials." |
+| **Analytical** | Data Scientist | "As a Data Scientist, I want to train and iterate on GNN models using PyTorch Geometric in Snowflake Notebooks with GPU compute, close to governed data." |
 
-## 3\. Data Architecture & Snowpark ML (Backend)
+---
 
-* **Structured Data (Inferred Schema):**  
-  * `[TABLE_1]`: \[Description of columns and grain\]  
-  * `[TABLE_2]`: \[Description of columns and grain\]  
-* **Unstructured Data (Tribal Knowledge):**  
-  * **Source Material:** \[e.g., Maintenance Manuals, Physician Notes, Legal Contracts\]  
-  * **Purpose:** Used to answer "How-to" or qualitative questions via Cortex Search.  
-* **ML Notebook Specification:**  
-  * **Objective:** \[e.g., Churn Prediction, Anomaly Detection\]  
-  * **Target Variable:** `[Column_Name]`  
-  * **Algorithm Choice:** \[e.g., XGBoost, Prophet\]  
-  * **Inference Output:** Predictions written to table `[OUTPUT_TABLE_NAME]`.
+## 3. Data Architecture
 
-## 4\. Cortex Intelligence Specifications
+### Data Strategy
 
-### Cortex Analyst (Structured Data / SQL)
+The solution fuses internal ERP data (the "known" graph) with external trade intelligence (the "inference" layer) to build a heterogeneous knowledge graph that reveals what ERP systems cannot see.
 
-* **Semantic Model Scope:**  
-  * **Measures:** \[List 3 key numerical metrics users will ask about\]  
-  * **Dimensions:** \[List 3 key categorical columns for filtering\]  
-* **Golden Query (Verification):**  
-  * *User Prompt:* "\[Insert realistic natural language question\]"  
-  * *Expected SQL Operation:* `SELECT [Measure] FROM [Table] GROUP BY [Dimension]`
+### Structured Data Schema
 
-### Cortex Search (Unstructured Data / RAG)
+| Table | Description | Key Columns | Source |
+|-------|-------------|-------------|--------|
+| `VENDORS` | Tier-1 supplier master from ERP (SAP LFA1 equivalent) | `VENDOR_ID`, `NAME`, `COUNTRY_CODE`, `CITY`, `TIER`, `FINANCIAL_HEALTH_SCORE` | Internal ERP |
+| `MATERIALS` | Parts and products hierarchy (SAP MARA equivalent) | `MATERIAL_ID`, `DESCRIPTION`, `MATERIAL_GROUP` (RAW/SEMI/FIN), `CRITICALITY_SCORE`, `INVENTORY_DAYS` | Internal ERP |
+| `PURCHASE_ORDERS` | Known supplier-to-part relationships (SAP EKPO equivalent) | `PO_ID`, `VENDOR_ID`, `MATERIAL_ID`, `QUANTITY`, `UNIT_PRICE`, `ORDER_DATE` | Internal ERP |
+| `BILL_OF_MATERIALS` | Part assembly hierarchy (SAP STPO equivalent) | `BOM_ID`, `PARENT_MATERIAL_ID`, `CHILD_MATERIAL_ID`, `QUANTITY_PER_UNIT` | Internal ERP |
+| `TRADE_DATA` | External bills of lading revealing Tier-2+ relationships | `BOL_ID`, `SHIPPER_NAME`, `CONSIGNEE_NAME`, `HS_CODE`, `SHIP_DATE`, `WEIGHT_KG` | External (Panjiva, ImportGenius) |
+| `REGIONS` | Geographic risk factors | `REGION_CODE`, `REGION_NAME`, `BASE_RISK_SCORE`, `GEOPOLITICAL_RISK`, `NATURAL_DISASTER_RISK` | External enrichment |
 
-* **Service Name:** `[DOMAIN]_SEARCH_SERVICE`  
-* **Indexing Strategy:**  
-  * **Document Attribute:** \[e.g., Indexing by `product_id` or `policy_type`\]  
-* **Sample RAG Prompt:** "\[Insert a question that requires reading the PDF documents\]"
+### GNN Model Output Tables
 
-## 5\. Streamlit Application UX/UI
+| Table | Description | Key Columns |
+|-------|-------------|-------------|
+| `RISK_SCORES` | GNN-computed risk scores for all supply chain nodes | `NODE_ID`, `NODE_TYPE`, `RISK_SCORE`, `RISK_CATEGORY`, `CONFIDENCE`, `EMBEDDING` |
+| `PREDICTED_LINKS` | Inferred Tier-2+ supplier relationships from link prediction | `SOURCE_NODE_ID`, `TARGET_NODE_ID`, `LINK_TYPE`, `PROBABILITY`, `EVIDENCE_STRENGTH` |
+| `BOTTLENECKS` | Identified single points of failure | `NODE_ID`, `DEPENDENT_COUNT`, `IMPACT_SCORE`, `MITIGATION_STATUS` |
 
-* **Layout Strategy:**  
-  * **Page 1 (Executive):** High-level KPI cards and aggregate trends.  
-  * **Page 2 (Action):** Interactive ML Drill-down and Chat Interface.  
-* **Component Logic:**  
-  * **Visualizations:** \[e.g., Altair Heatmap showing defect density\]  
-  * **Chat Integration:** \[Describe how the user toggles between asking the "Analyst" (Numbers) and "Search" (Docs)\].
+### Analytical Views
 
-## 6\. Success Criteria
+| View | Purpose |
+|------|---------|
+| `VW_SUPPLIER_RISK` | Combined supplier risk with regional factors and order statistics |
+| `VW_MATERIAL_RISK` | Material risk with supplier count and average supplier risk |
+| `VW_HIDDEN_DEPENDENCIES` | Predicted Tier-2+ links with entity resolution |
+| `VW_RISK_SUMMARY` | Executive dashboard aggregations by category |
 
-* **Technical Validator:** The system processes a natural language query and visualizes the result in \< 3 seconds.  
-* **Business Validator:** The workflow reduces the time-to-insight from \[Current State\] to \[Future State\].
+### External Data Sources (Snowflake Marketplace)
+
+| Provider | Data Type | Integration Point |
+|----------|-----------|-------------------|
+| **S&P Global Panjiva** | Trade flow edges (shipper-consignee) | GNN link prediction training |
+| **Oxford Economics TradePrism** | Forward-looking trade forecasts | Node feature enrichment |
+| **FactSet** | Entity resolution, corporate hierarchy | Supplier node canonicalization |
+| **Resilinc EventWatch AI** | Real-time disruption signals | Dynamic risk score updates |
+
+---
+
+## 4. ML/AI Specifications
+
+### GNN Notebook Specification
+
+| Parameter | Value |
+|-----------|-------|
+| **Objective** | Link Prediction + Risk Propagation |
+| **Framework** | PyTorch Geometric (PyG) |
+| **Model Architecture** | Heterogeneous GraphSAGE with HeteroConv |
+| **Node Types** | Vendor, Material, Region, External Supplier |
+| **Edge Types** | `supplies`, `component_of`, `located_in`, `ships_to` |
+| **Embedding Dimension** | 64 |
+| **Aggregation** | Mean pooling with learned transformation |
+| **Training Loss** | Binary Cross-Entropy (BCE) for link prediction |
+| **Validation** | Hold-out edge reconstruction |
+| **Inference Output** | Risk scores written to `RISK_SCORES`, predicted links to `PREDICTED_LINKS` |
+
+### Compute Resources
+
+| Resource | Configuration |
+|----------|---------------|
+| **Compute Pool** | GPU-enabled (SYSTEM$GPU_RUNTIME) |
+| **Warehouse** | Standard warehouse for inference queries |
+| **External Access** | PyPI integration for PyTorch Geometric dependencies |
+
+---
+
+## 5. Cortex Intelligence Specifications
+
+### Cortex Analyst (Semantic Model)
+
+**Semantic Model:** `@SEMANTIC_MODELS/supply_chain_risk.yaml`
+
+| Component | Specification |
+|-----------|---------------|
+| **Measures** | `risk_score`, `confidence`, `dependent_count`, `impact_score`, `financial_health` |
+| **Dimensions** | `vendor_name`, `country`, `tier`, `node_type`, `risk_category`, `mitigation_status` |
+| **Time Dimensions** | `calculated_at`, `identified_at` |
+
+**Verified Queries:**
+
+| Question | Purpose |
+|----------|---------|
+| "What is our overall portfolio risk?" | Portfolio-level KPIs |
+| "Which regions have the highest supply chain risk?" | Geographic risk exposure |
+| "What are our biggest bottlenecks?" | SPOF identification |
+| "Which suppliers have critical risk scores?" | Action prioritization |
+
+### Cortex Agent
+
+**Agent Name:** `SUPPLY_CHAIN_RISK_AGENT`
+
+| Tool | Type | Purpose |
+|------|------|---------|
+| `SUPPLY_CHAIN_ANALYTICS` | `cortex_analyst_tool` | Natural language queries via semantic model |
+| `RISK_SCENARIO_ANALYZER` | `sql_exec_tool` | Scenario analysis (regional disruption, vendor failure, portfolio summary) |
+
+**Sample Interactions:**
+
+- "What is our exposure to suppliers in China?"
+- "Run a regional disruption scenario for Southeast Asia with high shock intensity"
+- "Which critical materials are single-sourced?"
+
+### Risk Analysis UDF
+
+**Function:** `ANALYZE_RISK_SCENARIO(scenario_type, target_region, target_vendor, shock_intensity)`
+
+| Scenario Type | Analysis |
+|---------------|----------|
+| `REGIONAL_DISRUPTION` | Affected vendors, projected risk increase, diversification recommendation |
+| `VENDOR_FAILURE` | Material dependencies, bottleneck impact, mitigation priority |
+| `PORTFOLIO_SUMMARY` | Overall health score, critical counts, bottleneck totals |
+
+---
+
+## 6. Streamlit Application UX/UI
+
+### Application Structure
+
+| Page | Purpose | Key Features |
+|------|---------|--------------|
+| **Home** | The "Illusion of Diversity" narrative | Hero metrics, Traditional BI comparison, Concentration visualization |
+| **Executive Summary** | Portfolio health KPIs | Risk distribution, regional exposure, trend analysis |
+| **Exploratory Analysis** | Data exploration | Vendor/material distributions, spend analysis |
+| **Supply Network** | Interactive graph visualization | Multi-tier relationship exploration, filtering |
+| **Tier-2 Analysis** | Concentration deep-dive | Predicted links, probability scores, evidence |
+| **Scenario Simulator** | What-if analysis | Regional disruption, vendor failure scenarios |
+| **Command Center** | Cortex Agent chat interface | Natural language queries, scenario execution |
+| **Risk Mitigation** | Action prioritization | Ranked bottlenecks, mitigation status tracking |
+| **About** | Technical documentation | Architecture, data sources, methodology |
+
+### Design System
+
+| Element | Specification |
+|---------|---------------|
+| **Theme** | Dark mode (Slate background: `#0f172a` to `#1e293b`) |
+| **Primary Color** | Snowflake Blue (`#29B5E8`) |
+| **Alert Colors** | Critical: `#dc2626`, Warning: `#f59e0b`, Success: `#10b981` |
+| **Typography** | System UI, sans-serif |
+| **Chart Library** | Plotly (transparent backgrounds, slate grid lines) |
+
+### Key Visualizations
+
+| Visualization | Library | Purpose |
+|---------------|---------|---------|
+| Concentration Graph | Plotly Scatter (radial layout) | Show convergence on hidden Tier-2 |
+| Risk Distribution | Plotly Bar | Category breakdown |
+| Geographic Exposure | Plotly Choropleth/Bar | Regional supplier concentration |
+| Criticality Scatter | Plotly Scatter | Material risk vs supplier count |
+| Network Graph | Plotly/NetworkX | Full supply chain topology |
+
+---
+
+## 7. Deployment & Operations
+
+### Deployment Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `deploy.sh` | Full deployment: SQL setup, data load, notebook, Streamlit, Cortex components |
+| `run.sh` | Execute notebook, open Streamlit, check status |
+| `clean.sh` | Teardown all resources |
+
+### Component-Only Deployment Options
+
+```bash
+./deploy.sh --only-sql        # SQL setup only
+./deploy.sh --only-data       # Data upload and load only
+./deploy.sh --only-notebook   # Notebook deployment only
+./deploy.sh --only-streamlit  # Streamlit app only
+./deploy.sh --only-cortex     # Cortex UDF, semantic view, agent only
+```
+
+### Resource Naming Convention
+
+| Resource | Naming Pattern |
+|----------|----------------|
+| Database | `[PREFIX_]GNN_SUPPLY_CHAIN_RISK` |
+| Schema | `GNN_SUPPLY_CHAIN_RISK` |
+| Role | `[PREFIX_]GNN_SUPPLY_CHAIN_RISK_ROLE` |
+| Warehouse | `[PREFIX_]GNN_SUPPLY_CHAIN_RISK_WH` |
+| Compute Pool | `[PREFIX_]GNN_SUPPLY_CHAIN_RISK_COMPUTE_POOL` |
+| Notebook | `[PREFIX_]GNN_SUPPLY_CHAIN_RISK_NOTEBOOK` |
+| Streamlit App | `GNN_SUPPLY_CHAIN_RISK_APP` |
+| Cortex Agent | `SUPPLY_CHAIN_RISK_AGENT` |
+
+---
+
+## 8. Success Criteria
+
+### Technical Validators
+
+| Validator | Target |
+|-----------|--------|
+| GNN Training | Converges within 200 epochs |
+| Link Prediction AUC | > 0.75 |
+| Query Response Time | < 3 seconds for dashboard queries |
+| Cortex Agent Response | Natural language query returns results < 5 seconds |
+
+### Business Validators
+
+| Validator | Current State | Future State |
+|-----------|---------------|--------------|
+| Time to Risk Assessment | Weeks of manual research | Minutes of AI-powered analysis |
+| Tier Visibility | Tier-1 only | N-tier (Tier-2+ inferred) |
+| Bottleneck Discovery | Manual, ad-hoc | Automated, continuous |
+| Scenario Analysis | Spreadsheet-based | Real-time simulation |
+
+---
+
+## 9. Pilot Program
+
+### 6-Week Implementation Timeline
+
+| Phase | Duration | Activities |
+|-------|----------|------------|
+| **Data Integration** | 2 weeks | Connect ERP (vendor master, POs, BOMs), ingest trade intelligence feeds |
+| **Model Training** | 2 weeks | Build supply chain graph, train GNN on customer network |
+| **Deployment** | 2 weeks | Risk dashboards, Cortex Agent integration, user training |
+
+### Deliverables
+
+1. Deployed GNN model generating risk scores and predicted links
+2. Interactive Streamlit dashboard with concentration analysis
+3. Cortex Agent for natural language supply chain queries
+4. Documentation and training materials
+
+---
+
+## 10. Technology Stack
+
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| **Data Platform** | Snowflake | Unified storage, compute, governance |
+| **ML Framework** | PyTorch Geometric (PyG) | Graph neural network implementation |
+| **ML Compute** | Snowflake Notebooks (SPCS) | GPU-accelerated model training |
+| **Intelligence** | Cortex Analyst + Agent | Natural language interface |
+| **Visualization** | Streamlit in Snowflake | Interactive dashboard |
+| **Orchestration** | Snowflake CLI (snow) | Deployment automation |
+
+---
+
+## 11. Repository Structure
+
+```
+gnn_supply_chain_risk/
+├── DRD.md                           # This document
+├── deploy.sh                        # Deployment script
+├── run.sh                           # Execution script
+├── clean.sh                         # Cleanup script
+├── data/
+│   └── synthetic/                   # Pre-generated demo data (CSV)
+├── notebooks/
+│   ├── gnn_supply_chain_risk.ipynb  # GNN training notebook
+│   └── environment.yml              # Conda environment
+├── semantic_models/
+│   └── supply_chain_risk.yaml       # Cortex Analyst semantic model
+├── sql/
+│   ├── 01_account_setup.sql         # Role, database, warehouse, compute pool
+│   ├── 02_schema_setup.sql          # Tables, views, stages
+│   ├── 03_cortex_udf.sql            # Risk analysis UDF
+│   ├── 04_semantic_view.sql         # Semantic model stage
+│   └── 05_cortex_agent.sql          # Cortex Agent definition
+├── streamlit/
+│   ├── streamlit_app.py             # Main application
+│   ├── pages/                       # Multi-page app structure
+│   ├── utils/                       # Data loaders, helpers
+│   └── snowflake.yml                # Deployment config
+├── react/                           # Optional React + FastAPI frontend
+└── solution_presentation/
+    ├── slides/                      # Executive presentation SVGs
+    ├── images/                      # Architecture diagrams
+    └── *.md                         # Supporting documentation
+```
+
+---
+
+*Generated for N-Tier Supply Chain Risk Intelligence Solution*
+*Built with Snowflake | PyTorch Geometric | Streamlit*
